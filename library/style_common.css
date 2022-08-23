@@ -178,10 +178,10 @@ td{
 }
 .hidden{
   display: none;
-  position: relative;
 }
 .no_scroll{
   overflow-y: hidden;
+  position: relative;
 }
 .td_light{
   background-color: var(--d303030ld0d0d0);
