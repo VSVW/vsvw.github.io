@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja-jp">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docs</title>
+    <link rel="stylesheet" href="library/style_common.css">
+    <link rel="apple-touch-icon" href="library/images/favicon/favicon144.png">
+    <link rel="icon" href="library/images/favicon/favicon32.png">
+    <script src="library/script_common.js"></script>
+    <script src="library/script_index.js"></script>
+  </head>
+  <body onload="common();dispUpdate(1)">
+    <div class="gnav">
+      <a href="index.html">
+        <img class="gnav_logo" src="library/images/logo_dark.png">
+      </a>
+      <div class="gnav_border"></div>
+      <div id="gnav_menu">
+        <span class="gnav_current">
+          <a href="document_index.html">Docs</a>
+        </span>
+        <a href="index.html"><span class="gnav_menu_item">Home</span></a>
+        <a href="works_index.html"><span class="gnav_menu_item">Works</span></a>
+        <a href="about.html"><span class="gnav_menu_item">About</span></a>
+      </div>
+    </div>
+    <div class="gnav_sp">
+      <a href="index.html">
+        <img class="gnav_logo_sp" src="library/images/logo_dark.png">
+      </a>
+      <span class="gnav_current_sp">
+        <a href="document_index.html">Docs</a>
+      </span>
+      <input type="checkbox" id="gnav_menu_input_sp">
+      <label class="gnav_menu_label_sp" for="gnav_menu_input_sp"></label>
+      <label id="gnav_menu_sp_wrapper" for="gnav_menu_input_sp"></label>
+      <div id="gnav_menu_sp">
+        <div class="gnav_menu_item_sp"><a href="index.html"><span>Home</span></a></div>
+        <div class="gnav_menu_item_sp"><a href="document_index.html"><span>Docs</span></a></div>
+        <div class="gnav_menu_item_sp"><a href="works_index.html"><span>Works</span></a></div>
+        <div class="gnav_menu_item_sp"><a href="about.html"><span>About</span></a></div>
+      </div>
+    </div>
+    <div class="gnav_bottom"></div>
+    <div class="cmain">
+      <div class="index_update">
+        <h3>Recent</h3>
+        <div class="index_update_table">
+          <div id="index_update_docs">
+          </div>
+        </div>
+        <h3>Tags</h3>
+        <div class="index_update_table" id="index_update_tags">
+        </div>
+      </div>
+    </div>
+    <div class="gfoot">
+      <div class="gfoot_inner">
+        <div class="gfoot_left">
+          <a href="index.html"><img class="gfoot_logo" src="library/images/logo_dark.png"></a><br>
+          <span class="gfoot_rights">Except where otherwise noted,content on this site is licenced under a <a href='https://creativecommons.org/licenses/by-nc-sa/2.1/jp/' target='_blank' rel='noopener noreferrer'>Creative Coomons Attribution-NonCommercial-ShareAlike 2.1 Japan (CC BY-NC-SA 2.1 JP)</a>.</span>
+        </div>
+        <div class="gfoot_center">
+          <div class="gfoot_upper">
+            <span class="gfoot_menutitle"><a href="document_index.html">Docs</a></span><br>
+            <span class="gfoot_menucontent">- Recentry posted</span><br>
+            <span class="gfoot_menucontent">- Tags</span>
+          </div>
+          <div class="gfoot_lower">
+            <span class="gfoot_menutitle"><a href="works_index.html">Works</a></span><br>
+            <span class="gfoot_menucontent">- Under construction...</span>
+          </div>
+        </div>
+        <div class="gfoot_right">
+          <div class="gfoot_upper">
+            <span class="gfoot_menutitle"><a href="about.html">About</a></span><br>
+          </div>
+          <div class="gfoot_lower">
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

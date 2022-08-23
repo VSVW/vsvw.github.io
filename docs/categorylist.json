@@ -1,0 +1,18 @@
+{
+  "version":"1.0",
+  "updated":"2022/08/01",
+  "category":{
+    "Programming":{
+      "ja":"プログラミング",
+      "articles":["1660230000"]
+    },
+    "JavaScript":{
+      "ja":"JavaScript",
+      "articles":["1660230000"]
+    },
+    "TID":{
+      "ja":"TID解析",
+      "articles":["1660233600","1660237200"]
+    }
+  }
+}

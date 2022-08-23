@@ -1,0 +1,15 @@
+{
+  "title":"ブラウザの開発ツールを使ってツイートを一斉に取得する",
+  "description":"",
+  "date":"2022/08/24",
+  "paragraph":["0$h3","1$p","0$div$info_notice","2$h3","3$p","4$h4","5$pre","6$h3","7$p"],
+  "0$h3":"概要",
+  "1$p":"Twitterを用いたデータ分析を効率的に行うため、開発ツールを使ってツイートを一斉取得するコードを書いてみた。",
+  "0$div$info_notice":"【追記】APIでも第三者のツイートが取得できる模様(<a href='https://developer.twitter.com/en/docs/twitter-api/v1/tweets/timelines/api-reference/get-statuses-user_timeline' target='_blank' rel='noopener noreferrer'>外部リンク</a>参照)。余程の理由がない限りはこっちの方が良さそう。",
+  "2$h3":"ソースコード",
+  "3$p":"引数(任意)を指定することで取得するツイート数を指定可能。",
+  "4$h4":"JavaScript",
+  "5$pre":"<code><span class='code_prev_pi'>function</span> <span class='code_prev_bl'>getTweetsOnDevTools</span>(<span class='code_prev_bl'>val</span>){<br>&nbsp;&nbsp;<span class='code_prev_pi'>const</span> <span class='code_prev_bl'>tweets</span> = [];<br>&nbsp;&nbsp;<span class='code_prev_pi'>const</span> <span class='code_prev_bl'>tweetsElement</span> = [<span class='code_prev_pu'>document</span>.<span class='code_prev_gr'>querySelectorAll</span>(<span class='code_prev_db'>'[data-testid=&quot;tweetText&quot;]'</span>)][<span class='code_prev_db'>0</span>];<br>&nbsp;&nbsp;<span class='code_prev_pi'>if</span>(<span class='code_prev_bl'>val</span> === <span class='code_prev_pi'>undefined</span> || <span class='code_prev_bl'>val</span> > <span class='code_prev_bl'>tweetsElement</span>.<span class='code_prev_gr'>length</span>){<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='code_prev_bl'>val</span> = <span class='code_prev_bl'>tweetsElement</span>.<span class='code_prev_gr'>length</span>;<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class='code_prev_pi'>for</span>(<span class='code_prev_pi'>let</span> <span class='code_prev_bl'>i</span>=<span class='code_prev_db'>0</span>;<span class='code_prev_bl'>i</span><<span class='code_prev_bl'>val</span>;<span class='code_prev_bl'>i</span>++){<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class='code_prev_bl'>tweets</span>.<span class='code_prev_gr'>push</span>(<span class='code_prev_bl'>tweetsElement</span>[<span class='code_prev_bl'>i</span>].<span class='code_prev_gr'>innerText</span>);<br>&nbsp;&nbsp;}<br>&nbsp;&nbsp;<span class='code_prev_pu'>console</span>.<span class='code_prev_gr'>log</span>(<span class='code_prev_bl'>tweets</span>);<br>}</code>",
+  "6$h3":"注意点",
+  "7$p":"プロモーションツイートも一緒に取得してしまうため、別途処理を行う必要がある。"
+}
