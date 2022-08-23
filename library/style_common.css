@@ -422,7 +422,7 @@ td{
   margin: 2px;
 }
 .index_update > h3{
-  font-family: 'IBM Plex Sans';
+  font-family: 'IBM Plex Sans',sans-serif;
   font-size: 32px;
   font-weight: 600;
 }
@@ -528,6 +528,9 @@ td{
   }
 }
 @media (max-width: 600px){
+  body{
+    font-size: 14px;
+  }
   h3{
     font-size: 24px;
   }
@@ -641,7 +644,7 @@ td{
     display: none;
   }
   #chead_title{
-    font-size: 30px;
+    font-size: 28px;
   }
   .index_head{
     width: 100%;
