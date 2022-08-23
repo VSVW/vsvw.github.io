@@ -372,7 +372,7 @@ td{
 .index_title_img > span{
   color: var(--df0f0f0l101010);
   display: inline-block;
-  font-family: 'IBM Plex Sans';
+  font-family: 'IBM Plex Sans',sans-serif;
   font-size: 16px;
   padding: 0 10%;
   text-align: center;
