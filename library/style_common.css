@@ -178,6 +178,7 @@ td{
 }
 .hidden{
   display: none;
+  position: relative;
 }
 .no_scroll{
   overflow-y: hidden;
