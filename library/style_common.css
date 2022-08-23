@@ -61,10 +61,13 @@
     --dd7b600lbe9b00: #d7b600;
   }
 }
+html{
+  overflow: auto;
+}
 body{
   background-color: var(--d18181alffffff);
   color: var(--dffffffl38383d);
-  font-family: 'Roboto','Hiragino Kaku Gothic ProN','Meiryo',sans-serif;
+  font-family: 'Roboto','San Francisco','Hiragino Kaku Gothic ProN','Meiryo',sans-serif;
   margin: 0;
   padding: 0;
 }
@@ -372,7 +375,7 @@ td{
 .index_title_img > span{
   color: var(--df0f0f0l101010);
   display: inline-block;
-  font-family: 'IBM Plex Sans',sans-serif;
+  font-family: 'IBM Plex Sans','Roboto','San Francisco',sans-serif;
   font-size: 16px;
   padding: 0 10%;
   text-align: center;
@@ -422,7 +425,7 @@ td{
   margin: 2px;
 }
 .index_update > h3{
-  font-family: 'IBM Plex Sans',sans-serif;
+  font-family: 'IBM Plex Sans','Roboto','San Francisco',sans-serif;
   font-size: 32px;
   font-weight: 600;
 }
