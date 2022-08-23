@@ -5,8 +5,8 @@
  * ahead:article header
  * dmain:article main contents
  */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@1,300&display=swap');
+@import url('//fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+@import url('//fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@1,300&display=swap');
 :root{
   --d18181alffffff: #ffffff;
   --dffffffl38383d: #38383d;
