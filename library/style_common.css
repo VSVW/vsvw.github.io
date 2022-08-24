@@ -378,6 +378,7 @@ td{
   display: inline-block;
   font-family: 'IBM Plex Sans','Roboto','San Francisco',sans-serif;
   font-size: 16px;
+  font-style: italic;
   padding: 0 10%;
   text-align: center;
   width: 80%;
@@ -428,6 +429,7 @@ td{
 .index_update > h3{
   font-family: 'IBM Plex Sans','Roboto','San Francisco',sans-serif;
   font-size: 32px;
+  font-style: italic;
   font-weight: 500;
 }
 .dmain > p{
