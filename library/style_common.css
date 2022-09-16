@@ -1,12 +1,17 @@
 /*
+ * style_common.css
+ * date: 2022-08-16
+ * (c)2022 vsvw All Rights Reserved.
+ */
+/*
  * gnav:global_nav
  * lnav:local_nav
  * cmain:main_contents
  * ahead:article header
  * dmain:article main contents
  */
-@import url('//fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
-@import url('//fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@1,300&display=swap');
 :root{
   --d18181alffffff: #ffffff;
   --dffffffl38383d: #38383d;
@@ -489,6 +494,7 @@ td{
   border: 1px solid #4c4c4e;
   border-left: 4px solid #0080ff;
   border-radius: 4px;
+  margin: 2px 0 10px 0;
   padding: 10px;
 }
 .info_warn{
@@ -497,6 +503,7 @@ td{
   border: 1px solid var(--d56562elf4e89a);
   border-left: 4px solid var(--dd7b600lbe9b00);
   border-radius: 4px;
+  margin: 2px 0 10px 0;
   padding: 10px;
 }
 .info_warn2{
@@ -505,6 +512,7 @@ td{
   border: 1px solid var(--d743e4dlf8d5db);
   border-left: 4px solid var(--dff3b6bld70022);
   border-radius: 4px;
+  margin: 2px 0 10px 0;
   padding: 10px;
 }
 @media (max-width: 1200px){
