@@ -1,6 +1,6 @@
 /*
  * style_common.css
- * date: 2022-08-16
+ * date: 2022-09-18
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -85,6 +85,7 @@ del {
   margin: 0 4px;
 }
 p{
+  font-size: 16px;
   line-height: 28px;
   margin: 2px 0 10px 0;
 }
@@ -125,6 +126,9 @@ input[type='text']{
   margin: 6px 4px 4px 4px;
   min-width: 200px;
   padding: 0;
+}
+span{
+  font-size: 16px;
 }
 sup{
   color: var(--db0b0b0l404040);
