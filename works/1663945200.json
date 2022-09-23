@@ -1,0 +1,17 @@
+{
+  "title":"LEDマトリクス用データ変換ツール",
+  "paragraph":["00$script","0$h3","1$p","2$h3","3$div$info_warn","4$div$info_warn2$font-size:20px;","5$h3","6$p","7$div$$background:var(--d232327lf9f9fa);","8$h3","10$div$$$error","11$div$$$result","12$div"],
+  "00$script":"works/1663945200/script_1663945200.js",
+  "0$h3":"概要",
+  "1$p":"ビットマップ画像をLEDマトリクス制御用のデータに変換します。<br>このツールでは1ピクセル=1ドットとして変換しますので、他のサイズの場合は予めリサイズを行ってください。<br><sup>※クラッシュ等を防止するため、画像の幅×高さが65536pxを超えるサイズの画像は変換できないようになっています。<br>※現在、3色表示のみに対応しています。</sup>",
+  "2$h3":"注意事項",
+  "3$div$info_warn":"このコードは個人が趣味の範囲で作成したものです。誤動作等によって生じた損害については一切責任を負いかねます。",
+  "4$div$info_warn2$font-size:20px;":"サイズの大きな画像を変換する際には非常に高い負荷が掛かります。実行時には十分注意して下さい。",
+  "5$h3":"画像入力・変換設定",
+  "6$p":"変換する画像の入力、および各値に対応する色の設定を行って下さい。",
+  "7$div$$background:var(--d232327lf9f9fa);":"&nbsp;<span style='font-size:24px;'>0:</span><input type='color' id='ColorSelect0' value='#000000' onchange='_1663945200_colorchange(ColorSelect0,ColorDisplay0)'><label for='ColorSelect0' id='ColorDisplay0'>#000000</label><br>&nbsp;<span style='font-size:24px;'>1:</span><input type='color' id='ColorSelect1' value='#ff0000' onchange='_1663945200_colorchange(ColorSelect1,ColorDisplay1)'><label for='ColorSelect1' id='ColorDisplay1'>#ff0000</label><br>&nbsp;<span style='font-size:24px;'>2:</span><input type='color' id='ColorSelect2' value='#00ff00' onchange='_1663945200_colorchange(ColorSelect2,ColorDisplay2)'><label for='ColorSelect2' id='ColorDisplay2'>#00ff00</label><br>&nbsp;<span style='font-size:24px;'>3:</span><input type='color' id='ColorSelect3' value='#ff8000' onchange='_1663945200_colorchange(ColorSelect3,ColorDisplay3)'><label for='ColorSelect3' id='ColorDisplay3'>#ff8000</label><br><label class='dummy_file' style='vertical-align:3px;'><input type='file' id='input' accept='image/*' onchange='_1663945200_preview()'>画像選択</label><span id='FileNamePreview'></span><input type='button' id='runbutton' value='変換' style='vertical-align:3px;' onclick='_1663945200_run()' disabled><img id='ProgressArea' src='works/1663945200/Loading.gif' class='hidden' style='vertical-align:bottom;'><br><img id='ImagePreview'><canvas id='canvasElement' style='display:none;'></canvas>",
+  "8$h3":"変換結果",
+  "10$div$$$error":"",
+  "11$div$$$result":"<textarea rows='32' id='output' style='font-size:10px;'></textarea>",
+  "12$div":"<input type='button' id='copybutton' value='変換結果をコピー' onclick='_1663945200_copytoclipboad()' disabled>"
+}
