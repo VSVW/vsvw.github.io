@@ -49,7 +49,9 @@ function _1663945200_run(){
               error_list.push(dotText);
             }
           }
-          convertResult.value += ','
+          if(j !== imageElement.width - 1){
+            convertResult.value += ',';
+          }
         }
         if(i === imageElement.height - 1){
           convertResult.value += '}';
