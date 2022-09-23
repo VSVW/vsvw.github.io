@@ -1,6 +1,6 @@
 /*
  * style_common.css
- * date: 2022-09-18
+ * date: 2022-09-23
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -37,6 +37,9 @@
   --dfce2a1l715100: #715100;
   --d56562elf4e89a: #f4e89a;
   --dd7b600lbe9b00: #be9b00;
+  --d4e4e52lbebec0: #bebec0;
+  --db9b9bal38383a: #38383a;
+  --d0c0c0dlf9f9fa: #f9f9fa;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -64,6 +67,9 @@
     --dfce2a1l715100: #fce2a1;
     --d56562elf4e89a: #56562e;
     --dd7b600lbe9b00: #d7b600;
+    --d4e4e52lbebec0: #4e4e52;
+    --db9b9bal38383a: #b9b9ba;
+    --d0c0c0dlf9f9fa: #0c0c0d
   }
 }
 html{
@@ -85,7 +91,6 @@ del {
   margin: 0 4px;
 }
 p{
-  font-size: 16px;
   line-height: 28px;
   margin: 2px 0 10px 0;
 }
@@ -109,12 +114,46 @@ iframe{
   width: 100%;
 }
 input[type='button']{
-  background-color: var(--d232327lf9f9fa);
+  background-color: var(--d0c0c0dlf9f9fa);
   border: 2px solid #0a84ff;
   border-radius: 4px;
   color: var(--df0f0f0l101010);
   font-size: 16px;
   margin: 2px;
+}
+input[type='button']:hover{
+  background-color: var(--d232327lf9f9fa);
+  color: var(--db9b9bal38383a);
+}
+input[type='button']:disabled{
+  border: 2px solid var(--d4e4e52lbebec0);
+  color: var(--db9b9bal38383a);
+}
+input[type='color']{
+  background-color: var(--d232327lf9f9fa);
+  border: none;
+  border-radius: 4px;
+  color: var(--df0f0f0l101010);
+  font-size: 16px;
+  height: 30px;
+  margin: 2px;
+  width: 30px;
+}
+input[type='file']{
+  display:none;
+}
+.dummy_file{
+  background-color: var(--d0c0c0dlf9f9fa);
+  border: 2px solid #0a84ff;
+  border-radius: 4px;
+  color: var(--df0f0f0l101010);
+  font-size: 16px;
+  margin: 2px;
+  padding: 3px;
+}
+.dummy_file:hover{
+  background-color: var(--d232327lf9f9fa);
+  color: var(--db9b9bal38383a);
 }
 input[type='text']{
   background-color: var(--d232327lf9f9fa);
@@ -126,9 +165,6 @@ input[type='text']{
   margin: 6px 4px 4px 4px;
   min-width: 200px;
   padding: 0;
-}
-span{
-  font-size: 16px;
 }
 sup{
   color: var(--db0b0b0l404040);
@@ -144,8 +180,9 @@ table{
 textarea{
   background-color: var(--d232327lf9f9fa);
   border: 1px solid #0a84ff;
-  color: #f0f0f0;
+  color: var(--df0f0f0l101010);
   font-size: 16px;
+  width: 100%;
 }
 select{
   background-color: var(--d232327lf9f9fa);
