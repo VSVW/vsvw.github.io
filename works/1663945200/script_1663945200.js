@@ -30,6 +30,8 @@ function _1663945200_run(){
     let canvasElement = document.getElementById('canvasElement');
     let canvasContext = canvasElement.getContext('2d');
     let imageElement = document.getElementById('ImagePreview');
+    canvasElement.width = document.getElementById('ImagePreview').width;
+    canvasElement.height = document.getElementById('ImagePreview').height;
     canvasContext.clearRect(0, 0, canvasElement.width, canvasElement.height);
     canvasContext.drawImage(imageElement,0,0);
     if(document.getElementById('ImagePreview').width * document.getElementById('ImagePreview').height > 65536){
