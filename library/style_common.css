@@ -79,6 +79,7 @@ body{
   background-color: var(--d18181alffffff);
   color: var(--dffffffl38383d);
   font-family: 'Roboto','San Francisco','Hiragino Kaku Gothic ProN','Meiryo',sans-serif;
+  font-size: 16px;
   margin: 0;
   padding: 0;
 }
