@@ -1,6 +1,6 @@
 /*
  * style_common.css
- * date: 2022-09-27
+ * date: 2022-09-28
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -263,7 +263,7 @@ td{
   font-size: 18px;
   font-weight:500;
   margin: auto;
-  padding: 0 10px 0 5px;
+  padding: 0 5px;
 }
 .gnav_current > a{
   color: inherit;
