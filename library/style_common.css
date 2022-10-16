@@ -156,6 +156,20 @@ input[type='file']{
   background-color: var(--d232327lf9f9fa);
   color: var(--db9b9bal38383a);
 }
+input[type="range"]{
+  -webkit-appearance: none;
+  height: 4px;
+  background-color: #404040;
+  border-radius: 0px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 16px;
+  width: 16px;
+  background: #0a84ff;
+  border-radius: 50%;
+  cursor: pointer;
+}
 input[type='text']{
   background-color: var(--d232327lf9f9fa);
   border: none;
