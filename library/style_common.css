@@ -181,6 +181,10 @@ input[type='text']{
   min-width: 200px;
   padding: 0;
 }
+sub{
+  color: var(--db0b0b0l404040);
+  line-height: 0.75;
+}
 sup{
   color: var(--db0b0b0l404040);
   line-height: 0.75;
