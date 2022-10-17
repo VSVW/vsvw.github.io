@@ -1,6 +1,6 @@
 /*
- * style_common.css
- * date: 2022-09-28
+ * style_backyard.css
+ * date: 2022-10-17
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -115,12 +115,15 @@ iframe{
   width: 100%;
 }
 input[type='button']{
+  -webkit-appearance: none;
   background-color: var(--d0c0c0dlf9f9fa);
   border: 2px solid #edbb00;
   border-radius: 4px;
   color: var(--df0f0f0l101010);
   font-size: 16px;
   margin: 2px;
+  min-width: 75px;
+  padding: 3px;
 }
 input[type='button']:hover{
   background-color: var(--d232327lf9f9fa);
@@ -159,18 +162,21 @@ input[type='file']{
 input[type="range"]{
   -webkit-appearance: none;
   height: 4px;
-  background-color: #404040;
+  background-color: var(--d404040lc0c0c0);
   border-radius: 0px;
+  min-width: 200px;
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  height: 16px;
-  width: 16px;
+  height: 24px;
+  width: 24px;
   background: #edbb00;
   border-radius: 50%;
   cursor: pointer;
 }
 input[type='text']{
+  -webkit-appearance: none;
+  -webkit-border-radius: 0;
   background-color: var(--d232327lf9f9fa);
   border: none;
   border-bottom: 2px solid #edbb00;
@@ -204,10 +210,11 @@ textarea{
   width: 100%;
 }
 select{
+  -webkit-border-radius: 0;
   background-color: var(--d232327lf9f9fa);
   border: none;
-  border-bottom: 1px solid #edbb00;
-  color: #f0f0f0;
+  border-bottom: 2px solid #edbb00;
+  color: var(--df0f0f0l101010);
   font-size: 16px;
   height: 30px;
   margin: 6px 4px 4px 4px;
