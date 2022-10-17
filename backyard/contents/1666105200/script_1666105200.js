@@ -1452,7 +1452,9 @@ function kamokuCategoryOpen(id,classNm){
 }
 function _1666105200_dispChishiki(id){
   document.getElementById('chishikiMenu').classList.add('hidden');
+  document.getElementById('chishikiImg').classList.remove('hidden');
   document.getElementById('chishikiAudio').removeAttribute('controls');
+  document.getElementById('chishikiImg').src = '';
   document.getElementById('chishikiAudio').src = '';
   document.getElementById('chishikiRev').classList.remove('hidden');
   document.getElementById('chishikiFwd').classList.remove('hidden');
