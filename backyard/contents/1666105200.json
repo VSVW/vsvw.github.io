@@ -7,5 +7,5 @@
   "1$div$info_notice":"オリジナル版は<a href='https://pos.toshin.com/TGT/OPCTTS/Basic100/basic100_menu.html' target='_blank' rel='noopener noreferrer'>こちら</a>",
   "2$div":"<span>メニューから科目・カテゴリーを選択してください。<span style='color:#edbb00;'>黄色の文字</span>は難易度の高い知識です。</span><br><input type='button' onclick='_1666105200_dispMenu()' value='メニュー'><span id='currentChishiki_Monitor' style='color:#878789;'></span>",
   "3$div$$list-style-type:none;$chishikiMenu":"",
-  "4$div":"<audio id='chishikiAudio'></audio><img id='chishikiImg' style='min-width:80%;max-width:80%;' alt='読み込み中...' class='hidden'><input type='button' onclick='_1666105200_dispRev()' value='&lt;' id='chishikiRev' class='hidden' style='min-width:40px !important;'><input type='button' onclick='_1666105200_dispFwd()' value='&gt;' id='chishikiFwd' class='hidden' style='min-width:40px !important;'>"
+  "4$div":"<audio id='chishikiAudio'></audio><div style='width:90%; padding-left:5%;'><img id='chishikiImg' style='min-width:100%;max-width:100%;' alt='読み込み中...' class='hidden'><br><input type='button' onclick='_1666105200_dispRev()' value='&lt;' id='chishikiRev' class='hidden' style='min-width:40px !important;'><input type='button' onclick='_1666105200_dispFwd()' value='&gt;' id='chishikiFwd' class='hidden' style='min-width:40px !important; float:right;'></div>"
 }
