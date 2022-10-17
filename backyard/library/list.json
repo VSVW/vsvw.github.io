@@ -1,8 +1,9 @@
 {
   "version":"1.0",
-  "update":"2022/10/16",
+  "update":"2022/10/19",
   "contents_update":[
-    ["POST","1665932400"]
+    ["POST","1666105200"],
+    ["UPDATE","1665932400"]
   ],
   "tags":{
     "None":{
@@ -12,6 +13,10 @@
     "Dev":{
       "disp":"Dev",
       "works":["1665932400"]
+    },
+    "NGShs":{
+      "disp":"NGShs",
+      "works":["1666105200"]
     }
   },
   "backyard":{
@@ -20,6 +25,12 @@
       "title":"CSS_Test",
       "description":"Stylesheet test",
       "date":"2022/10/17"
+    },
+    "1666105200":{
+      "category":["NGShs"],
+      "title":"Basic100",
+      "description":"スマホで学ぶ基礎知識100",
+      "date":"2022/10/18"
     }
   }
 }
