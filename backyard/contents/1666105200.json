@@ -1,0 +1,11 @@
+{
+  "title":"Basic100",
+  "description":"スマホで学ぶ基礎知識100",
+  "date":"2022/10/18",
+  "paragraph":["00$script","1$div$info_notice","2$div","3$div$$list-style-type:none;$chishikiMenu","4$div"],
+  "00$script":"contents/1666105200/script_1666105200.js",
+  "1$div$info_notice":"オリジナル版は<a href='https://pos.toshin.com/TGT/OPCTTS/Basic100/basic100_menu.html' target='_blank' rel='noopener noreferrer'>こちら</a>",
+  "2$div":"<span>メニューから科目・カテゴリーを選択してください。<span style='color:#edbb00;'>黄色の文字</span>は難易度の高い知識です。</span><br><input type='button' onclick='_1666105200_dispMenu()' value='メニュー'><span id='currentChishiki_Monitor' style='color:#878789;'></span>",
+  "3$div$$list-style-type:none;$chishikiMenu":"",
+  "4$div":"<audio id='chishikiAudio'></audio><img id='chishikiImg' style='width:80%;'><input type='button' onclick='_1666105200_dispRev()' value='&lt;' id='chishikiRev' class='hidden' style='min-width:25px !important;'><input type='button' onclick='_1666105200_dispFwd()' value='&gt;' id='chishikiFwd' class='hidden' style='min-width:25px !important;'>"
+}
