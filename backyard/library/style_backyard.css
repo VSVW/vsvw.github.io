@@ -13,64 +13,33 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@1,300&display=swap');
 :root{
-  --d18181alffffff: #ffffff;
-  --dffffffl38383d: #38383d;
-  --d303030ld0d0d0: #d0d0d0;
-  --db0b0b0l404040: #404040;
-  --de0e0e0l202020: #202020;
-  --df0f0f0l101010: #101010;
-  --dffffffl000000: #000000;
-  --d404040lc0c0c0: #c0c0c0;
-  --d232327lf9f9fa: #f9f9fa;
-  --db1b1b3l38383d: #38383d;
-  --d939395l737373: #737373;
-  --d75aeffl0074e8: #0074e8;
-  --d709affl003eaa: #003eaa;
-  --d86de74l058b00: #058b00;
-  --dff7de9ldd00a9: #dd00a9;
-  --db98effl8000d7: #8000d7;
-  --dffb3d2la4000f: #a4000f;
-  --d4b2f36lfbf2f5: #fbf2f5;
-  --d743e4dlf8d5db: #f8d5db;
-  --dff3b6bld70022: #d70022;
-  --d42381elfffbd6: #fffbd6;
-  --dfce2a1l715100: #715100;
-  --d56562elf4e89a: #f4e89a;
-  --dd7b600lbe9b00: #be9b00;
-  --d4e4e52lbebec0: #bebec0;
-  --db9b9bal38383a: #38383a;
-  --d0c0c0dlf9f9fa: #f9f9fa;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --d18181alffffff: #18181a;
-    --dffffffl38383d: #ffffff;
-    --d303030ld0d0d0: #303030;
-    --db0b0b0l404040: #b0b0b0;
-    --de0e0e0l202020: #e0e0e0;
-    --df0f0f0l101010: #f0f0f0;
-    --dffffffl000000: #ffffff;
-    --d404040lc0c0c0: #404040;
-    --d232327lf9f9fa: #232327;
-    --db1b1b3l38383d: #b1b1b3;
-    --d939395l737373: #939395;
-    --d75aeffl0074e8: #75aeff;
-    --d709affl003eaa: #709aff;
-    --d86de74l058b00: #86de74;
-    --dff7de9ldd00a9: #ff7de9;
-    --db98effl8000d7: #db98ef;
-    --dffb3d2la4000f: #ffb3d2;
-    --d4b2f36lfbf2f5: #4b2f36;
-    --d743e4dlf8d5db: #743e4d;
-    --dff3b6bld70022: #ff3b6b;
-    --d42381elfffbd6: #42381e;
-    --dfce2a1l715100: #fce2a1;
-    --d56562elf4e89a: #56562e;
-    --dd7b600lbe9b00: #d7b600;
-    --d4e4e52lbebec0: #4e4e52;
-    --db9b9bal38383a: #b9b9ba;
-    --d0c0c0dlf9f9fa: #0c0c0d
-  }
+  --d18181alffffff: #18181a;
+  --dffffffl38383d: #ffffff;
+  --d303030ld0d0d0: #303030;
+  --db0b0b0l404040: #b0b0b0;
+  --de0e0e0l202020: #e0e0e0;
+  --df0f0f0l101010: #f0f0f0;
+  --dffffffl000000: #ffffff;
+  --d404040lc0c0c0: #404040;
+  --d232327lf9f9fa: #232327;
+  --db1b1b3l38383d: #b1b1b3;
+  --d939395l737373: #939395;
+  --d75aeffl0074e8: #75aeff;
+  --d709affl003eaa: #709aff;
+  --d86de74l058b00: #86de74;
+  --dff7de9ldd00a9: #ff7de9;
+  --db98effl8000d7: #db98ef;
+  --dffb3d2la4000f: #ffb3d2;
+  --d4b2f36lfbf2f5: #4b2f36;
+  --d743e4dlf8d5db: #743e4d;
+  --dff3b6bld70022: #ff3b6b;
+  --d42381elfffbd6: #42381e;
+  --dfce2a1l715100: #fce2a1;
+  --d56562elf4e89a: #56562e;
+  --dd7b600lbe9b00: #d7b600;
+  --d4e4e52lbebec0: #4e4e52;
+  --db9b9bal38383a: #b9b9ba;
+  --d0c0c0dlf9f9fa: #0c0c0d;
 }
 html{
   overflow: auto;
@@ -158,7 +127,7 @@ input[type='file']{
 .dummy_file:hover{
   background-color: var(--d232327lf9f9fa);
   color: var(--db9b9bal38383a);
-}	
+}
 input[type="range"]{
   -webkit-appearance: none;
   height: 4px;
