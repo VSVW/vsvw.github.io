@@ -47,7 +47,7 @@ function dispUpdate(mode){
   });
 }
 function getClientInfo(){
-  let outputHTML = '-Info-\n Platform: ' + navigator.platform + '\nUserAgent: ' + navigator.userAgent + '\n Language: ' + window.navigator.language +'\n Viewport: ' + window.innerWidth + '×' + window.innerHeight;
+  let outputHTML = '-Info-\n Platform: ' + navigator.platform + '\nUserAgent: ' + navigator.userAgent + '\n Language: ' + window.navigator.language +'\n Viewport: ' + window.innerWidth + '×' + window.innerHeight + '\n Referrer: ' + document.referrer;
   document.getElementById('index_dev_client').textContent = outputHTML;
 }
 function load_document(val){
