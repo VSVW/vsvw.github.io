@@ -1,6 +1,6 @@
 {
   "version":"1.0",
-  "update":"2022/10/20",
+  "update":"2022/10/24",
   "docs_update":[
     ["UPDATE","1660240800"],
     ["POST","1663340400"],
@@ -37,7 +37,7 @@
       "category":["NGShs"],
       "title":"東進ハイスクール/東進衛星予備校の校舎コードを調べてみた",
       "description":"",
-      "date":"2022/10/20"
+      "date":"2022/10/24"
     },
     "1660251600":{
       "category":["JavaScript"],
