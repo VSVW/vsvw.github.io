@@ -1,7 +1,8 @@
 {
   "version":"1.0",
-  "update":"2022/10/19",
+  "update":"2022/10/31",
   "contents_update":[
+    ["POST","1667142000"],
     ["POST","1666105200"],
     ["UPDATE","1665932400"]
   ],
@@ -16,7 +17,7 @@
     },
     "NGShs":{
       "disp":"NGShs",
-      "works":["1666105200"]
+      "works":["1666105200","1667142200"]
     }
   },
   "backyard":{
@@ -31,6 +32,12 @@
       "title":"Basic100",
       "description":"スマホで学ぶ基礎知識100",
       "date":"2022/10/18"
+    },
+    "1667142000":{
+      "category":["NGShs"],
+      "title":"RBT2",
+      "description":"Rapid Basic Training",
+      "date":"2022/10/31"
     }
   }
 }
