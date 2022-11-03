@@ -1,6 +1,6 @@
 /*
  * style_backyard.css
- * date: 2022-10-17
+ * date: 2022-11-04
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -165,11 +165,14 @@ sup{
   line-height: 0.75;
 }
 table{
-  border: 1px solid #000000;
   border-collapse: collapse;
+  display: block;
   margin: 0;
   padding: 0;
   width: 100%;
+}
+tbody{
+  border: 1px solid #000000;
 }
 textarea{
   background-color: var(--d232327lf9f9fa);
@@ -211,7 +214,7 @@ th{
 td{
   margin: 0;
   padding: 0 5px;
-/*white-space: nowrap;*/
+  white-space: nowrap;
   word-break: break-all;
 }
 .private:after{
@@ -509,8 +512,7 @@ td{
   color: var(--dffffffl000000;);
 }
 .dmain_table{
-  margin: 0 15%;
-  width: 70%;
+  overflow: auto;
 }
 .code_prev_comment{
   color: var(--d939395l737373);
@@ -572,11 +574,6 @@ td{
   padding: 10px;
 }
 @media (max-width: 1200px){
-  .dmain_table{
-    width: 80%;
-    margin: 0 10%;
-    overflow: auto;
-  }
   .index_title_img > img{
     width: 90%;
     padding: 0 5%;
@@ -742,10 +739,5 @@ td{
   }
   .dmain_img > img{
     max-width: 90%;
-  }
-  .dmain_table{
-    width: 90%;
-    margin: 0 5%;
-    overflow: auto;
   }
 }
