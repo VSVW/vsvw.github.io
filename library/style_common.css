@@ -198,6 +198,7 @@ sup{
 table{
   border: 1px solid #000000;
   border-collapse: collapse;
+  display: block;
   margin: 0;
   padding: 0;
   width: 100%;
