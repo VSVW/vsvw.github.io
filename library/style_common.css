@@ -196,7 +196,6 @@ sup{
   line-height: 0.75;
 }
 table{
-  border: 1px solid #000000;
   border-collapse: collapse;
   display: block;
   margin: 0;
@@ -246,7 +245,7 @@ th{
 td{
   margin: 0;
   padding: 0 5px;
-/*white-space: nowrap;*/
+  white-space: nowrap;
   word-break: break-all;
 }
 .text_warn{
