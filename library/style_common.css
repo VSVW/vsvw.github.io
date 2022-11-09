@@ -1,6 +1,6 @@
 /*
  * style_common.css
- * date: 2022-11-04
+ * date: 2022-11-10
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -96,9 +96,9 @@ p{
   margin: 2px 0 10px 0;
 }
 h4{
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
-  margin: 5px 0 0 0;
+  margin: 5px 0 10px 0;
   padding: 10px 0 0 0;
 }
 h3{
