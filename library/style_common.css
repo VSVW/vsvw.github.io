@@ -1,6 +1,6 @@
 /*
  * style_common.css
- * date: 2022-11-10
+ * date: 2022-11-11
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -98,7 +98,7 @@ p{
 h4{
   font-size: 20px;
   font-weight: 500;
-  margin: 5px 0 10px 0;
+  margin: 5px 0 5px 0;
   padding: 10px 0 0 0;
 }
 h3{
@@ -133,6 +133,51 @@ input[type='button']:disabled{
   border: 2px solid var(--d4e4e52lbebec0);
   color: var(--db9b9bal38383a);
 }
+input[type='checkbox']{
+  display:none;
+}
+.dummy_checkbox{
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-block;
+  padding: 5px 30px;
+  position: relative;
+  width: auto;
+}
+.dummy_checkbox::before{
+  background: var(--d232327lf9f9fa);;
+  border: 2px solid var(--d4e4e52lbebec0);
+  border-radius: 2px;
+  content: '';
+  display: block;
+  height: 16px;
+  left: 5px;
+  margin-top: -8px;
+  position: absolute;
+  top: 50%;
+  width: 16px;
+}
+.dummy_checkbox::after{
+  border-right: 3px solid var(--d18181alffffff);
+  border-bottom: 3px solid var(--d18181alffffff);
+  content: '';
+  display: block;
+  height: 11px;
+  left: 10px;
+  margin-top: -7px;
+  opacity: 0;
+  position: absolute;
+  top: 50%;
+  transform: rotate(45deg);
+  width: 7px;
+}
+input[type='checkbox']:checked + .dummy_checkbox::before{
+  background: #0084ff;
+  border: 2px solid #0084ff;
+}
+input[type='checkbox']:checked + .dummy_checkbox::after{
+  opacity: 1;
+}
 input[type='color']{
   background-color: var(--d232327lf9f9fa);
   border: none;
@@ -164,6 +209,7 @@ input[type="range"]{
   height: 4px;
   background-color: var(--d404040lc0c0c0);
   border-radius: 0px;
+  margin: 16px 0;
   min-width: 200px;
 }
 input[type="range"]::-webkit-slider-thumb {
