@@ -6,6 +6,8 @@ function _1669302000_colorchange(){
 }
 
 function _1669302000_run(){
+  document.getElementById('errorInfo').classList.add('hidden');
+  document.getElementById('errorInfo').innerHTML = '';
   const inputStr = document.getElementById('textInput').value;
   textColor = document.getElementById('textColor').value;
   let errorText = '以下の文字を変換できませんでした:<br>';
