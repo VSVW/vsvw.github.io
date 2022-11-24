@@ -223,9 +223,12 @@ tbody{
 textarea{
   background-color: var(--d232327lf9f9fa);
   border: 1px solid #edbb00;
+  border-radius: 4px;
   color: var(--df0f0f0l101010);
   font-size: 16px;
-  width: 100%;
+  margin: 2px;
+  padding: 3px;
+  width: 80%;
 }
 select{
   -webkit-border-radius: 0;
