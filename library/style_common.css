@@ -1,6 +1,6 @@
 /*
  * style_common.css
- * date: 2022-11-11
+ * date: 2022-11-24
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -254,9 +254,12 @@ tbody{
 textarea{
   background-color: var(--d232327lf9f9fa);
   border: 1px solid #0a84ff;
+  border-radius: 4px;
   color: var(--df0f0f0l101010);
   font-size: 16px;
-  width: 100%;
+  margin: 2px;
+  padding: 3px;
+  width: 80%;
 }
 select{
   -webkit-border-radius: 0;
