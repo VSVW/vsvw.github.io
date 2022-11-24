@@ -8,7 +8,7 @@ function disp(){
       return response.json();
     })
     .then(data => {
-      if(Object.keys(data['works']).indexOf(param) == -1){
+      if(Object.keys(data['works']).indexOf(param) == -1 && getparam('a') !== 'l'){
         load_document('404');
       }else{
         load_document(param)
