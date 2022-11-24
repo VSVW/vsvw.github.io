@@ -1,0 +1,16 @@
+{
+  "title":"\"例のフォント\"変換ツール",
+  "paragraph":["00$script","0$h3","1$p","2$h3","3$div$info_warn","4$div$info_notice","5$h3","6$p","7$div$$background:var(--d232327lf9f9fa);","8$h3","10$div$$overflow:auto;$result","11$div"],
+  "00$script":"works/1669302000/script_1669302000.js",
+  "0$h3":"仕様",
+  "1$p":"入力された文字列をTIMS/TIS/TIOS/S-TIMなどのモニタ表示器で使用されている&quot;例のフォント&quot;で表示します。<br>現在の対応文字数:738文字 (2022/11/25現在)",
+  "2$h3":"注意事項・お知らせ",
+  "3$div$info_warn":"このページで使用しているコードは個人が趣味の範囲で作成したものです。誤動作等によって生じた損害については一切責任を負いかねます。<br>また、各種権利の関係で公開を停止することがあります。",
+  "4$div$info_notice":"本ツールで使用している字形に誤りなどを見つけた場合や現在未対応の文字の資料をお持ちの場合はDMなどでお知らせください。",
+  "5$h3":"文字列入力・文字色設定",
+  "6$p":"表示させたい文字列、および文字色を設定して下さい。",
+  "7$div$$background:var(--d232327lf9f9fa);":"<img src='works/1669302000/img1.png' id='sourceImage' class='hidden'><textarea id='textInput' rows='4'>Type here</textarea><br><input type='color' id='textColor' value='#ffffff' onchange='_1669302000_colorchange()'><label for='textColor' id='colorDisplay'>#ffffff</label><br><input type='button' id='runbutton' value='変換' style='vertical-align:3px;' onclick='_1669302000_run()'>",
+  "8$h3":"変換結果",
+  "10$div$$overflow:auto;$result":"<canvas id='imageOutput' width='300' height='300'></canvas>",
+  "11$div":"<div class='info_warn hidden' id='errorInfo'></div>"
+}
