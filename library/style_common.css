@@ -1,6 +1,6 @@
 /*
  * style_common.css
- * date: 2022-11-24
+ * date: 2022-12-04
  * (c)2022 vsvw All Rights Reserved.
  */
 /*
@@ -40,6 +40,8 @@
   --d4e4e52lbebec0: #bebec0;
   --db9b9bal38383a: #38383a;
   --d0c0c0dlf9f9fa: #f9f9fa;
+  --d2e2e32lffffff: #ffffff;
+  --d38383dle0e0e0: #e0e0e0;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -69,7 +71,9 @@
     --dd7b600lbe9b00: #d7b600;
     --d4e4e52lbebec0: #4e4e52;
     --db9b9bal38383a: #b9b9ba;
-    --d0c0c0dlf9f9fa: #0c0c0d
+    --d0c0c0dlf9f9fa: #0c0c0d;
+    --d2e2e32lffffff: #2e2e32;
+    --d38383dle0e0e0: #38383d;
   }
 }
 html{
@@ -154,7 +158,7 @@ input[type='checkbox']{
   left: 5px;
   margin-top: -8px;
   position: absolute;
-  top: 50%;
+  top: 40%;
   width: 16px;
 }
 .dummy_checkbox::after{
@@ -167,7 +171,7 @@ input[type='checkbox']{
   margin-top: -7px;
   opacity: 0;
   position: absolute;
-  top: 50%;
+  top: 40%;
   transform: rotate(45deg);
   width: 7px;
 }
@@ -292,6 +296,8 @@ th{
   padding: 0 5px;
 }
 td{
+  background-color: var(--d232327lf9f9fa);
+  border-right: 2px solid var(--d38383dle0e0e0);
   margin: 0;
   padding: 0 5px;
   white-space: nowrap;
@@ -308,7 +314,7 @@ td{
   position: relative;
 }
 .td_light{
-  background-color: var(--d303030ld0d0d0);
+  background-color: var(--d2e2e32lffffff);
 }
 .gnav{
   align-items: center;
