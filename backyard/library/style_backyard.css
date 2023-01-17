@@ -1,7 +1,7 @@
 /*
  * style_backyard.css
- * date: 2022-12-04
- * (c)2022 vsvw All Rights Reserved.
+ * date: 2023-01-17
+ * (c)2023 vsvw All Rights Reserved.
  */
 /*
  * gnav:global_nav
@@ -107,6 +107,9 @@ input[type='button']:disabled{
 input[type='checkbox']{
   display:none;
 }
+input[type='radio']{
+  display:none;
+}
 .dummy_checkbox{
   box-sizing: border-box;
   cursor: pointer;
@@ -147,7 +150,36 @@ input[type='checkbox']:checked + .dummy_checkbox::before{
   background: #edbb00;
   border: 2px solid #edbb00;
 }
+input[type='checkbox']:disabled + .dummy_checkbox::before{
+  background: var(--d18181alffffff);
+  border: 2px solid var(--db0b0b0l404040) !important;
+}
+input[type='checkbox']:disabled:checked + .dummy_checkbox::before{
+  background: var(--db0b0b0l404040) !important;
+  border: 2px solid var(--db0b0b0l404040) !important;
+}
+input[type='checkbox']:disabled + .dummy_checkbox{
+  color: var(--db0b0b0l404040) !important;
+}
 input[type='checkbox']:checked + .dummy_checkbox::after{
+  opacity: 1;
+}
+input[type='radio']:checked + .dummy_checkbox::before{
+  background: #edbb00;
+  border: 2px solid #edbb00;
+}
+input[type='radio']:disabled + .dummy_checkbox::before{
+  background: none;
+  border: 2px solid var(--db0b0b0l404040) !important;
+}
+input[type='radio']:disabled:checked + .dummy_checkbox::before{
+  background: var(--db0b0b0l404040) !important;
+  border: 2px solid var(--db0b0b0l404040) !important;
+}
+input[type='radio']:disabled + .dummy_checkbox{
+  color: var(--db0b0b0l404040) !important;
+}
+input[type='radio']:checked + .dummy_checkbox::after{
   opacity: 1;
 }
 input[type='color']{
@@ -189,6 +221,30 @@ input[type="range"]::-webkit-slider-thumb {
   height: 24px;
   width: 24px;
   background: #edbb00;
+  border-radius: 50%;
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  -webkit-appearance: none;
+  height: 24px;
+  width: 24px;
+  background: #edbb00;
+  border-radius: 50%;
+  cursor: pointer;
+}
+input[type="range"]:disabled::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 24px;
+  width: 24px;
+  background: var(--db0b0b0l404040);
+  border-radius: 50%;
+  cursor: pointer;
+}
+input[type="range"]:disabled::-moz-range-thumb {
+  -webkit-appearance: none;
+  height: 24px;
+  width: 24px;
+  background: var(--db0b0b0l404040);
   border-radius: 50%;
   cursor: pointer;
 }
