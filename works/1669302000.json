@@ -3,7 +3,7 @@
   "paragraph":["00$script","0$h3","1$p","2$h3","3$div$info_warn","4$div$info_notice","5$h3","6$p","7$div$$background:var(--d232327lf9f9fa);","8$h3","10$div$$overflow:auto;$result","11$div","12$h3","13$table"],
   "00$script":"works/1669302000/script_1669302000.js",
   "0$h3":"仕様",
-  "1$p":"入力された文字列をTIMS/TIS/TIOS/S-TIMなどのモニタ表示器で使用されている&quot;例のフォント&quot;で表示します。<br>現在の対応文字数:738文字 (2022/11/25現在)",
+  "1$p":"入力された文字列をTIMS/TIS/TIOS/S-TIMなどのモニタ表示器で使用されている&quot;例のフォント&quot;で表示します。<br>現在の対応文字数:749文字 (2023/01/18現在)",
   "2$h3":"注意事項・お知らせ",
   "3$div$info_warn":"このページで使用しているコードは個人が趣味の範囲で作成したものです。誤動作等によって生じた損害については一切責任を負いかねます。<br>また、各種権利の関係で公開を停止することがあります。",
   "4$div$info_notice":"本ツールで使用している字形に誤りなどを見つけた場合や現在未対応の文字の資料をお持ちの場合はDMなどでお知らせください。",
@@ -14,5 +14,5 @@
   "10$div$$overflow:auto;$result":"<canvas id='imageOutput' width='300' height='300'></canvas>",
   "11$div":"<div class='info_warn hidden' id='errorInfo'></div>",
   "12$h3":"更新・修正情報",
-  "13$table":[["th$日付","th$追加$min-width:100px;","th$修正$min-width:100px;","th$その他$min-width:100px;"],["td$2022/12/04","td$天(U+5929), 比(U+6BD4), 祐(U+7950), 脱(U+8131)","td$寺(U+5BFA)","td$"]]
+  "13$table":[["th$日付","th$追加$min-width:100px;","th$修正$min-width:100px;","th$その他$min-width:100px;"],["td$2022/12/04","td$天(U+5929), 比(U+6BD4), 祐(U+7950), 脱(U+8131)","td$寺(U+5BFA)","td$"],["td$2023/01/18","td$f(U+66), 〜(U+301C), 久(U+4E45), 喜(U+559C), 完(U+5B8C), 糸(U+7CF8), 錦(U+9326)","td$","td$"]]
 }
