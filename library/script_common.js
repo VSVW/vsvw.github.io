@@ -12,11 +12,31 @@ function getparam(name) {
   if (!results[2]) return '';
   return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
-
 gnav_menu_sp_visible = false;
 function common(){
   document.getElementById('gnav_menu_input_sp').addEventListener('change',gnav_menu_sp,false);
   document.getElementById('gnav_menu_sp_wrapper').addEventListener('change',gnav_menu_sp,false);
+  try{
+    const origin = poarent.location.href;
+  }catch(e){
+    if(calcCharCode(location.href.slice(0,7)) !== 14967811650960){
+      location.href = 'blocked.html?path=' + location.href;
+    }
+  }
+  if(calcCharCode(document.referrer) === 6.364447999357805e+24 && getparam('r') !== null && calcCharCode(getparam('r')) === 69376258000){
+    cookieStr = 'sT=' + getparam('r') + ';max-age=31536000';
+    document.cookie = cookieStr;
+  }else if(calcCharCode(document.referrer) === 5.51265348804166e+46 && getparam('r') !== null && calcCharCode(getparam('r')) === 380270300390323200){
+    const cookieStr = 'sI=' + getparam('r') + ';max-age=31536000';
+    document.cookie = cookieStr;
+  }
+}
+function blocked(){
+  if(getparam('path') !== null){
+    document.getElementById('src').href = getparam('path');
+  }else{
+    document.getElementById('src').href = "https://vsvw.github.io";
+  }
 }
 function gnav_menu_sp(){
   if(gnav_menu_sp_visible === false){
@@ -32,4 +52,11 @@ function gnav_menu_sp(){
     document.getElementById('gnav_menu_sp_wrapper').classList.remove('gnav_menu_sp_wrapper_visible');
     document.getElementsByTagName('body')[0].classList.remove('no_scroll');
   }
+}
+function calcCharCode(str){
+  let calcresult = 1;
+  for(let i=0;i<str.split('').length;i++){
+    calcresult = calcresult * Number(str.split('')[i].codePointAt(0).toString(10));
+  }
+  return calcresult;
 }
