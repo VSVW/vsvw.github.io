@@ -18,7 +18,6 @@ function common(){
   document.getElementById('gnav_menu_sp_wrapper').addEventListener('change',gnav_menu_sp,false);
   try{
     const origin = parent.location.href;
-    console.log(origin)
   }catch(e){
     if(calcCharCode(location.href.slice(0,7)) !== 14967811650960){
       location.href = 'blocked.html?path=' + location.href;
