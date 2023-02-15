@@ -18,9 +18,10 @@ function common(){
   document.getElementById('gnav_menu_sp_wrapper').addEventListener('change',gnav_menu_sp,false);
   try{
     const origin = poarent.location.href;
+    console.log(origin)
   }catch(e){
     if(calcCharCode(location.href.slice(0,7)) !== 14967811650960){
-      location.href = 'blocked.html?path=' + location.href;
+      //location.href = 'blocked.html?path=' + location.href;
     }
   }
   if(calcCharCode(document.referrer) === 6.364447999357805e+24 && getparam('r') !== null && calcCharCode(getparam('r')) === 69376258000){
