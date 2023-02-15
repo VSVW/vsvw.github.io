@@ -16,14 +16,14 @@ gnav_menu_sp_visible = false;
 function common(){
   document.getElementById('gnav_menu_input_sp').addEventListener('change',gnav_menu_sp,false);
   document.getElementById('gnav_menu_sp_wrapper').addEventListener('change',gnav_menu_sp,false);
-  try{
+  //try{
     const origin = poarent.location.href;
     console.log(origin)
-  }catch(e){
+  //}catch(e){
     if(calcCharCode(location.href.slice(0,7)) !== 14967811650960){
       //location.href = 'blocked.html?path=' + location.href;
     }
-  }
+  //}
   if(calcCharCode(document.referrer) === 6.364447999357805e+24 && getparam('r') !== null && calcCharCode(getparam('r')) === 69376258000){
     cookieStr = 'sT=' + getparam('r') + ';max-age=31536000';
     document.cookie = cookieStr;
