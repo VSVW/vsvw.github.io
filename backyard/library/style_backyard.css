@@ -1,6 +1,6 @@
 /*
  * style_backyard.css
- * date: 2023-01-17
+ * date: 2023-03-19
  * (c)2023 vsvw All Rights Reserved.
  */
 /*
@@ -321,11 +321,14 @@ th{
 }
 td{
   background-color: var(--d232327lf9f9fa);
-  border-right: 2px solid var(--d38383dle0e0e0);
+  border-bottom: 1px solid var(--d38383dle0e0e0);
+  border-right: 1px solid var(--d38383dle0e0e0);
   margin: 0;
   padding: 0 5px;
+/*2023-03-19
   white-space: nowrap;
   word-break: break-all;
+*/
 }
 .private:after{
   background-image: url(f0c1.svg);
@@ -615,7 +618,6 @@ td{
   width: 100%;
 }
 .dmain_img > img{
-  max-height: 400px;
   max-width: 50%;
 }
 .dmain_img > sup{
