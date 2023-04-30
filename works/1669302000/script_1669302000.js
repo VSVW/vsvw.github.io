@@ -6,6 +6,8 @@
   .then(data => {
     addressList = data['addressList'];
     exceptionList = data['exceptionList'];
+    x0 = data['x0'];
+    y0 = data['y0'];
   })
 })();
 
@@ -54,16 +56,16 @@ function _1669302000_run(){
   canvasElement.height = maxHeight;
   canvasContext.fillStyle = 'rgb(0,0,0)';
   canvasContext.fillRect(0,0,maxWidth,maxHeight);
-  let sx = 0;
-  let sy = 0;
+  let sx = x0;
+  let sy = y0;
   sWidth = 0;
   let sHeight = 16;
   dx = 0;
   let dy = 0;
   for(let i=0;i<splitText.length;i++){
     if(addressList[splitText[i].codePointAt(0).toString(16)] !== undefined && splitText[i].codePointAt(0).toString(10) !== '10'){
-      sx = addressList[splitText[i].codePointAt(0).toString(16)][0];
-      sy = addressList[splitText[i].codePointAt(0).toString(16)][1];
+      sx = x0 + addressList[splitText[i].codePointAt(0).toString(16)][0];
+      sy = y0 + addressList[splitText[i].codePointAt(0).toString(16)][1];
       if(splitText[i].codePointAt(0).toString(10) < 128 || splitText[i].codePointAt(0).toString(10) > 65377 || exceptionList.indexOf(splitText[i].codePointAt(0).toString(16)) !== -1){
         sWidth = 8;
       }else{
@@ -79,7 +81,7 @@ function _1669302000_run(){
     }else{
       canvasContext.fillStyle = textColor;
       canvasContext.fillRect(dx,dy,16,16);
-      canvasContext.drawImage(imageElement,0,16,16,16,dx,dy,16,16);
+      canvasContext.drawImage(imageElement,x0 + addressList['ffff'][0],y0 + addressList['ffff'][1],16,16,dx,dy,16,16);
       isError = true;
       errorText += splitText[i] + ' (U+' + splitText[i].codePointAt(0).toString(16) + ')<br>';
       dx = dx + 16;
