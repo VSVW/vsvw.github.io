@@ -83,6 +83,13 @@ function load_document(val){
         htmlText.src = data[paragraph_info[i]];
         const position = document.getElementsByTagName('script')[0];
         position.parentNode.insertBefore(htmlText,position);
+      }else if(info[1] == 'style'){
+        let htmlText = document.createElement('link');
+        htmlText.rel = 'stylesheet';
+        htmlText.type = 'text/css';
+        htmlText.href = data[paragraph_info[i]];
+        const position = document.getElementsByTagName('link')[0];
+        position.parentNode.insertBefore(htmlText,position);
       }
     }
   });
