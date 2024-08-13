@@ -1,7 +1,7 @@
 {
   "title":"東急線アプリで使用されていた在線データを解析してみた",
   "description":"",
-  "date":"2023/03/06",
+  "date":"2024/08/13",
   "paragraph":["0$h3","1$p","2$div$info_warn2","3$h3","4$p","5$table","6$h3","7$p","8$p","9$pre","10$p","11$pre","12$p","13$pre","14$h3","15$h4$$$operation_number","16$p","17$h4$$$kind","18$p","19$div$dmain_table","20$h4$$$delay_time","21$p","22$h4$$$line_id","23$p","24$table","25$h4$$$num_of_cars","26$p","27$h4$$$train_line_id","28$p","29$h4$$$station_id","30$p","31$img","32$img","33$h4$$$up","34$p","35$h4$$$affiliation","36$p","37$div$dmain_table"],
   "0$h3":"概要",
   "1$p":"<a href='https://ii.tokyu.co.jp/tokyusenapuri' target='_blank' rel='noopener noreferrer'>東急線アプリ</a>で2022年9月まで使用されていた在線データ(JSON形式)の仕様について解析してみた。今回解析したデータは最新版のアプリでは使用されていないものの、記事公開時点では引き続きアクセスが可能である。",
