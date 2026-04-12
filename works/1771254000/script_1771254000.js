@@ -60,9 +60,9 @@ function __getTimetableDatafromWebSite(stationName){
 })();
 
 function _1771254000_run(diagram_mode){
-    let tableHTML_JJ = '<tr><th colspan="3" style="border-bottom:2px solid #08b263;position:sticky;top:0;">常磐快</th></tr><tr><td style="position:sticky;top:26px;">列車番号</td><td style="position:sticky;top:26px;">松戸発</td><td style="position:sticky;top:26px;">上野着</td></tr>';
-    let tableHTML_JYJK = '<tr><th colspan="3" style="border-bottom:2px solid #00b2e7;position:sticky;top:0;">山手京浜</th></tr><tr><td style="position:sticky;top:26px;">列車番号</td><td style="position:sticky;top:26px;">上野発</td><td style="position:sticky;top:26px;">秋葉原発</td></tr>';
-    let tableHTML_JB = '<tr><th colspan="5" style="border-bottom:2px solid #ffd403;position:sticky;top:0;">中・総緩</th></tr><tr><td style="position:sticky;top:26px;">列車番号</td><td style="position:sticky;top:26px;">秋葉原発</td><td style="position:sticky;top:26px;">飯田橋発</td><td style="position:sticky;top:26px;">市ケ谷発</td><td style="position:sticky;top:26px;">信濃町発</td></tr>';
+    let tableHTML_JJ = '<tr><th colspan="3" style="border-bottom:2px solid #08b263;position:sticky;top:0;">常磐快</th></tr><tr><td style="position:sticky;top:26px;">列番</td><td style="position:sticky;top:26px;">松戸</td><td style="position:sticky;top:26px;">上野着</td></tr>';
+    let tableHTML_JYJK = '<tr><th colspan="3" style="border-bottom:2px solid #00b2e7;position:sticky;top:0;">山手京浜</th></tr><tr><td style="position:sticky;top:26px;">列番</td><td style="position:sticky;top:26px;">上野</td><td style="position:sticky;top:26px;">秋葉原</td></tr>';
+    let tableHTML_JB = '<tr><th colspan="5" style="border-bottom:2px solid #ffd403;position:sticky;top:0;">中・総緩</th></tr><tr><td style="position:sticky;top:26px;">列番</td><td style="position:sticky;top:26px;">秋葉原</td><td style="position:sticky;top:26px;">飯田橋</td><td style="position:sticky;top:26px;">市ケ谷</td><td style="position:sticky;top:26px;">信濃町</td></tr>';
     //まず山手・京浜の時刻情報を時刻潤に混ぜる
     train_data_JY05JK30 = train_data['diagrams'][train_data['current_diagram_version']][diagram_mode]['JY05'];
     for(let i=0; i<train_data['diagrams'][train_data['current_diagram_version']][diagram_mode]['JK30'].length; i++){
