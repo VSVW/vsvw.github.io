@@ -214,6 +214,56 @@ input[type='radio']:disabled + .dummy_checkbox{
 input[type='radio']:checked + .dummy_checkbox::after{
   opacity: 1;
 }
+
+.dummy_radio_button {
+  -webkit-appearance: none;
+  background-color: var(--d0c0c0dlf9f9fa);
+  border: 2px solid var(--db1b1b3l38383d);
+  border-radius: 4px;
+  color: var(--df0f0f0l101010);
+  display: inline-block;
+  font-size: 16px;
+  margin: 2px;
+  text-align: center;
+  min-width: 75px;
+  padding: 6px;
+}
+
+input[type='radio']:hover+.dummy_radio_button {
+  background-color: var(--d232327lf9f9fa);
+  color: var(--db9b9bal38383a);
+}
+
+input[type='radio']:checked+.dummy_radio_button {
+  border: 2px solid #0080ff;
+}
+
+input[type='radio']:checked+.dummy_radio_button::after {
+  opacity: 1;
+}
+
+input[type='radio']:disabled+.dummy_radio_button::before {
+  background: none;
+  border: 2px solid var(--la4a4a4d787878) !important;
+}
+
+input[type='radio']:disabled:checked+.dummy_radio_button::before {
+  background: var(--la4a4a4d787878) !important;
+  border: 2px solid var(--la4a4a4d787878) !important;
+}
+
+input[type='radio']:disabled+.dummy_radio_button {
+  -webkit-appearance: none;
+  background-color: var(--d0c0c0dlf9f9fa);
+  border: 2px solid var(--d4e4e52lbebec0);
+  border-radius: 4px;
+  color: var(--db9b9bal38383a);
+  display: block;
+  margin: 2px;
+  min-width: 75px;
+  padding: 3px;
+}
+
 input[type='color']{
   background-color: var(--d232327lf9f9fa);
   border: none;
