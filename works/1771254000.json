@@ -1,0 +1,13 @@
+{
+  "title": "TransitTimer",
+  "paragraph": [
+    "00$script",
+    "00$style",
+    "0$div",
+    "1$div$$display:inline-flex;"
+  ],
+  "00$script": "works/1771254000/script_1771254000.js",
+  "00$style": "works/1771254000/style_1771254000.css",
+  "0$div": "<span>ダイヤ選択：</span><input type='radio' id='modeSelect_weekdays' name='modeSelect' checked></input><label for='modeSelect_weekdays' class='dummy_radio_button'>平日</label><input type='radio' id='modeSelect_holidays' name='modeSelect'></input><label for='modeSelect_holidays' class='dummy_radio_button'>土休日</label><br>",
+  "1$div$$display:inline-flex;": "<div style='overflow-y:auto;height:400px;display:inline;'><table id='timetable_JJ' style='display:inline;border-collapse:separate;'></table></div>　<div style='overflow-y:auto;height:400px;display:inline;'><table id='timetable_JYJK' style='display:inline;border-collapse:separate;'></table></div>　<div style='overflow-y:auto;height:400px;display:inline;'><table id='timetable_JB' style='display:inline;border-collapse:separate;'></table></div>　"
+}
