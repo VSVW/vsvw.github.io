@@ -114,6 +114,18 @@
     let dataArray = null;
     let isRunning = false;
     let isFileMode = false;
+    let lastTime = 0; // 🌟 宣言漏れを追加
+
+    // 🌟 AudioContextの初期化関数を追加
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048; // 自己相関に必要な十分なバッファサイズ
+        dataArray = new Float32Array(analyser.fftSize);
+      }
+    }
 
     // 🌟 解析パラメータと状態変数
     const TARGET_FREQ = 662.24; // E5
