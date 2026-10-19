@@ -122,7 +122,7 @@
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         audioCtx = new AudioContext();
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048; // 自己相関に必要な十分なバッファサイズ
+        analyser.fftSize = 8192; // 🌟 2048から8192へ大幅拡大（低音の長い周期を確実に捉えるため）
         dataArray = new Float32Array(analyser.fftSize);
         freqDataArray = new Uint8Array(analyser.frequencyBinCount); // 🌟 初期化
       }
@@ -173,7 +173,7 @@
       let rms = 0;
       for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
       rms = Math.sqrt(rms / buffer.length);
-      if (rms < 0.01) return -1; // ノイズ除去
+      if (rms < 0.005) return -1; // 🌟 音量（ノイズ）の足切りラインを少し緩和 (0.01 -> 0.005)
 
       const halfBufferSize = Math.floor(buffer.length / 2);
       const yinBuffer = new Float32Array(halfBufferSize);
@@ -196,7 +196,7 @@
 
       // 3. 絶対閾値によるピッチ探索 (Absolute threshold)
       let tauEstimate = -1;
-      const threshold = 0.15; // YINアルゴリズムの標準的な閾値
+      const threshold = 0.2; // 🌟 閾値を少し緩和 (0.15 -> 0.2) 楽器の自然なゆらぎを許容
       for (let tau = 2; tau < halfBufferSize; tau++) {
         if (yinBuffer[tau] < threshold) {
           while (tau + 1 < halfBufferSize && yinBuffer[tau + 1] < yinBuffer[tau]) {
