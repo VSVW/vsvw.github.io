@@ -38,22 +38,30 @@
   <!-- メインコンテンツ -->
   <main class="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
     
-    <!-- 測定値表示パネル -->
-    <div class="grid grid-cols-2 gap-4">
-      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-        <div class="text-xs text-slate-400 mb-1">Volume (RMS)</div>
-        <div id="val-vol" class="text-2xl font-mono text-cyan-400">0.0</div>
+    <!-- 測定値表示パネル（リニューアル） -->
+    <div class="flex flex-col gap-4">
+      
+      <!-- Pitch Meter (TDM-700風 アナログチューナー針) -->
+      <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 relative flex flex-col items-center shadow-inner">
+        <div class="text-xs text-slate-400 mb-2 font-bold w-full tracking-widest">PITCH DEVIATION</div>
+        <div class="relative w-full max-w-md aspect-[2/1] mt-2">
+            <canvas id="pitch-canvas" class="absolute inset-0 w-full h-full"></canvas>
+        </div>
+        <div class="absolute top-4 right-4 text-xs text-slate-500 bg-slate-950 px-2 py-1 rounded">Target: E5 (662.2Hz)</div>
       </div>
-      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
-        <div class="text-xs text-slate-400 mb-1">Pitch Dev (Hz)</div>
-        <div id="val-pitch" class="text-2xl font-mono text-yellow-400">0.0</div>
-      </div>
-    </div>
 
-    <!-- メーター描画キャンバス -->
-    <div class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-48 relative">
-      <div class="absolute top-2 left-2 text-xs text-slate-500">Target: 662.2 Hz (E5)</div>
-      <canvas id="meter-canvas"></canvas>
+      <!-- Volume Bar (ピークホールド付き横長バー) -->
+      <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-inner">
+        <div class="flex justify-between items-end mb-3">
+          <div class="text-xs text-slate-400 font-bold tracking-widest">VOLUME (RMS)</div>
+        </div>
+        <div class="relative h-6 bg-slate-950 rounded-full border border-slate-800 overflow-hidden shadow-inner">
+          <!-- 音量バー本体 -->
+          <div id="vol-bar" class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-emerald-500 via-yellow-400 to-red-500 transition-all duration-75" style="width: 0%"></div>
+          <!-- ピーク線 -->
+          <div id="vol-peak" class="absolute top-0 bottom-0 w-1 bg-white z-10 transition-all duration-75" style="left: 0%"></div>
+        </div>
+      </div>
     </div>
 
     <!-- 逆引き診断結果パネル -->
@@ -68,10 +76,10 @@
   <script>
     // --- UI要素の取得 ---
     const btnStart = document.getElementById('btn-start');
-    const valVol = document.getElementById('val-vol');
-    const valPitch = document.getElementById('val-pitch');
-    const canvas = document.getElementById('meter-canvas');
-    const ctx = canvas.getContext('2d');
+    const volBar = document.getElementById('vol-bar');
+    const volPeak = document.getElementById('vol-peak');
+    const pitchCanvas = document.getElementById('pitch-canvas');
+    const pitchCtx = pitchCanvas.getContext('2d');
     const diagPanel = document.getElementById('diagnosis-panel');
     const diagTitle = document.getElementById('diag-title');
     const diagAction = document.getElementById('diag-action');
@@ -100,8 +108,10 @@
 
     // --- キャンバスのリサイズ処理 ---
     function resizeCanvas() {
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = canvas.parentElement.clientHeight;
+      if (pitchCanvas) {
+        pitchCanvas.width = pitchCanvas.parentElement.clientWidth;
+        pitchCanvas.height = pitchCanvas.parentElement.clientHeight;
+      }
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
@@ -292,7 +302,11 @@
         if (peakVol < 0) peakVol = 0;
       }
 
-      valVol.textContent = displayVol.toFixed(1);
+      // 🌟UI更新: 音量バー (HTML要素による描画)
+      let volPercent = Math.min(displayVol, 100);
+      let peakPercent = Math.min(peakVol, 100);
+      volBar.style.width = `${volPercent}%`;
+      volPeak.style.left = `${peakPercent}%`;
 
       // --- ピッチズレの計算 (IQ復調) ---
       let freqDev = 0;
@@ -307,7 +321,6 @@
         freqDev = phaseDiff / (2 * Math.PI * deltaTime);
         lastPhase = currentPhase;
       }
-      valPitch.textContent = (freqDev > 0 ? "+" : "") + freqDev.toFixed(2);
       lastTime = currentTime;
 
       // --- 簡単な診断ロジック ---
@@ -329,23 +342,85 @@
       diagTitle.textContent = diagTxt;
       diagAction.textContent = actionTxt;
 
-      // --- メーターの描画 (Canvas) ---
-      const w = canvas.width;
-      const h = canvas.height;
-      ctx.clearRect(0, 0, w, h);
+      // 🌟UI更新: ピッチメーターの描画 (Canvasによる針アニメーション)
+      const w = pitchCanvas.width;
+      const h = pitchCanvas.height;
+      pitchCtx.clearRect(0, 0, w, h);
 
-      // バーの描画
-      const barWidth = 60;
-      const x = (w - barWidth) / 2;
-      const barHeight = Math.min((displayVol / 100) * h, h);
+      const cx = w / 2;
+      const cy = h - 5; // 下部中心点
+      // キャンバスサイズに合わせて半径を計算
+      const radius = Math.min(cx - 20, h - 30);
+
+      // 背景の扇形エリア
+      pitchCtx.beginPath();
+      pitchCtx.arc(cx, cy, radius, Math.PI, 0);
+      pitchCtx.fillStyle = '#0f172a'; // slate-950
+      pitchCtx.fill();
+
+      // 外枠のアーチ線
+      pitchCtx.beginPath();
+      pitchCtx.arc(cx, cy, radius, Math.PI, 0);
+      pitchCtx.strokeStyle = '#334155';
+      pitchCtx.lineWidth = 2;
+      pitchCtx.stroke();
+
+      // 目盛りの描画 (中心0Hz、左右に±5Hzを想定)
+      for(let dev = -5; dev <= 5; dev++) {
+         let angle = -Math.PI / 2 + (dev / 5) * (Math.PI / 3); // 左右60度ずつ振る
+         let isCenter = dev === 0;
+         let isMajor = dev % 5 === 0;
+         let length = isCenter ? 15 : (isMajor ? 10 : 5);
+         
+         pitchCtx.beginPath();
+         pitchCtx.moveTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+         pitchCtx.lineTo(cx + Math.cos(angle) * (radius - length), cy + Math.sin(angle) * (radius - length));
+         pitchCtx.strokeStyle = isCenter ? '#10b981' : (isMajor ? '#64748b' : '#334155');
+         pitchCtx.lineWidth = isCenter ? 3 : 2;
+         pitchCtx.stroke();
+
+         // 数値ラベル
+         if (isMajor) {
+           pitchCtx.fillStyle = isCenter ? '#10b981' : '#64748b';
+           pitchCtx.font = "10px sans-serif";
+           pitchCtx.textAlign = "center";
+           pitchCtx.textBaseline = "top";
+           let textRadius = radius - length - 15;
+           pitchCtx.fillText(dev === 0 ? "0" : (dev > 0 ? "+5" : "-5"), cx + Math.cos(angle) * textRadius, cy + Math.sin(angle) * textRadius);
+         }
+      }
+
+      // 針（メーター）の描画
+      // 振り切れ処理（-5.5Hz ～ +5.5Hz で針を止める）
+      let displayDev = Math.max(-5.5, Math.min(5.5, freqDev));
+      let meterAngle = -Math.PI / 2 + (displayDev / 5) * (Math.PI / 3);
       
-      ctx.fillStyle = displayVol > 80 ? '#ef4444' : displayVol > 50 ? '#eab308' : '#22c55e';
-      ctx.fillRect(x, h - barHeight, barWidth, barHeight);
+      pitchCtx.beginPath();
+      pitchCtx.moveTo(cx, cy);
+      pitchCtx.lineTo(cx + Math.cos(meterAngle) * (radius - 5), cy + Math.sin(meterAngle) * (radius - 5));
+      // 0.5Hz以内なら緑、2Hz以内なら黄、それ以上は赤
+      pitchCtx.strokeStyle = Math.abs(displayDev) < 0.5 ? '#10b981' : (Math.abs(displayDev) < 2 ? '#eab308' : '#ef4444');
+      pitchCtx.lineWidth = 3;
+      pitchCtx.lineCap = "round";
+      pitchCtx.stroke();
 
-      // ピーク線の描画
-      const peakY = h - Math.min((peakVol / 100) * h, h);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(x, peakY, barWidth, 3);
+      // 中央のピン留め
+      pitchCtx.beginPath();
+      pitchCtx.arc(cx, cy, 8, 0, Math.PI * 2);
+      pitchCtx.fillStyle = '#1e293b';
+      pitchCtx.fill();
+      pitchCtx.strokeStyle = '#475569';
+      pitchCtx.lineWidth = 2;
+      pitchCtx.stroke();
+
+      // 現在の正確な数値をキャンバス内（針の根元上部）にも描画
+      pitchCtx.fillStyle = Math.abs(displayDev) < 0.5 ? '#10b981' : '#94a3b8';
+      pitchCtx.font = "bold 22px monospace";
+      pitchCtx.textAlign = "center";
+      pitchCtx.fillText((freqDev > 0 ? "+" : "") + freqDev.toFixed(1), cx, cy - radius / 2 - 10);
+      pitchCtx.font = "10px sans-serif";
+      pitchCtx.fillStyle = '#64748b';
+      pitchCtx.fillText("Hz", cx, cy - radius / 2 + 5);
 
       requestAnimationFrame(processAudio);
     }
