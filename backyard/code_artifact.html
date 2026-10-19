@@ -168,42 +168,71 @@
       return closest;
     }
 
-    // 🌟 高精度ピッチ検出アルゴリズム (自己相関法 / YIN簡易版)
-    function autoCorrelate(buf, sampleRate) {
-      let SIZE = buf.length;
+    // 🌟 高精度ピッチ検出アルゴリズム (YINアルゴリズム完全版)
+    function autoCorrelate(buffer, sampleRate) {
       let rms = 0;
-      for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-      rms = Math.sqrt(rms / SIZE);
+      for (let i = 0; i < buffer.length; i++) rms += buffer[i] * buffer[i];
+      rms = Math.sqrt(rms / buffer.length);
       if (rms < 0.01) return -1; // ノイズ除去
 
-      // 基本周期の探索
-      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-      for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-      for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-      
-      buf = buf.subarray(r1, r2); // 🌟 sliceからsubarrayに変更（より軽量・安全）
-      SIZE = buf.length;
+      const halfBufferSize = Math.floor(buffer.length / 2);
+      const yinBuffer = new Float32Array(halfBufferSize);
 
-      let c = new Array(SIZE).fill(0);
-      for (let i = 0; i < SIZE; i++)
-        for (let j = 0; j < SIZE - i; j++)
-          c[i] = c[i] + buf[j] * buf[j + i];
-
-      let d = 0; while (c[d] > c[d + 1]) d++;
-      let maxval = -1, maxpos = -1;
-      for (let i = d; i < SIZE; i++) {
-        if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+      // 1. 差分関数 (Difference function)
+      for (let tau = 0; tau < halfBufferSize; tau++) {
+        for (let i = 0; i < halfBufferSize; i++) {
+          let delta = buffer[i] - buffer[i + tau];
+          yinBuffer[tau] += delta * delta;
+        }
       }
-      let T0 = maxpos;
-      if (T0 <= 0 || T0 >= SIZE - 1) return -1;
 
-      // 放物線補間で周波数の特定精度をさらに向上
-      let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
-      let a = (x1 + x3 - 2 * x2) / 2;
-      let b = (x3 - x1) / 2;
-      if (a) T0 = T0 - b / (2 * a);
+      // 2. 累積平均正規化差分関数 (Cumulative mean normalized difference)
+      yinBuffer[0] = 1;
+      let runningSum = 0;
+      for (let tau = 1; tau < halfBufferSize; tau++) {
+        runningSum += yinBuffer[tau];
+        yinBuffer[tau] *= tau / runningSum;
+      }
 
-      return sampleRate / T0;
+      // 3. 絶対閾値によるピッチ探索 (Absolute threshold)
+      let tauEstimate = -1;
+      const threshold = 0.15; // YINアルゴリズムの標準的な閾値
+      for (let tau = 2; tau < halfBufferSize; tau++) {
+        if (yinBuffer[tau] < threshold) {
+          while (tau + 1 < halfBufferSize && yinBuffer[tau + 1] < yinBuffer[tau]) {
+            tau++;
+          }
+          tauEstimate = tau;
+          break;
+        }
+      }
+
+      // 閾値を下回るものがなければ、全体から最小値を探す
+      if (tauEstimate === -1) {
+        let minVal = Infinity;
+        for (let tau = 2; tau < halfBufferSize; tau++) {
+          if (yinBuffer[tau] < minVal) {
+            minVal = yinBuffer[tau];
+            tauEstimate = tau;
+          }
+        }
+        if (minVal > 0.5) return -1; // 周期性なし
+      }
+
+      // 4. 放物線補間による精度の極限向上 (Parabolic interpolation)
+      let betterTau = tauEstimate;
+      if (tauEstimate > 0 && tauEstimate < halfBufferSize - 1) {
+        let s0 = yinBuffer[tauEstimate - 1];
+        let s1 = yinBuffer[tauEstimate];
+        let s2 = yinBuffer[tauEstimate + 1];
+        let shift = 0.5 * (s2 - s0) / (2 * s1 - s2 - s0);
+        // ゼロ除算を防止しつつ補間
+        if (Math.abs(2 * s1 - s2 - s0) > 0.0001) {
+          betterTau = tauEstimate + shift;
+        }
+      }
+
+      return sampleRate / betterTau;
     }
 
     // 🌟ファイル入力とシークバーのイベント処理
@@ -434,17 +463,14 @@
             advId = isOverOk ? "ADV_G" : "ADV_H";
           }
         }
-      }
-
-      if (advId) {
-        const diag = adviceDatabase[advId];
-        diagTitle.textContent = diag.icon + " " + diag.title;
-        diagAction.textContent = diag.action;
-        document.getElementById('diag-target-body').textContent = diag.targetBody;
-      } else {
-        diagTitle.textContent = "音が小さすぎます";
-        diagAction.textContent = "しっかりと楽器に息を吹き込んでください。";
-        document.getElementById('diag-target-body').textContent = "--";
+        
+        // 🌟【修正】音量が十分な時のみ診断結果を更新（一時停止・無音時は直前を保持）
+        if (advId) {
+          const diag = adviceDatabase[advId];
+          diagTitle.textContent = diag.icon + " " + diag.title;
+          diagAction.textContent = diag.action;
+          document.getElementById('diag-target-body').textContent = diag.targetBody;
+        }
       }
 
       // --- 5. UI更新: ピッチメーターの描画 ---
