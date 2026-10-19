@@ -47,7 +47,7 @@
         <div class="relative w-full max-w-md aspect-[2/1] mt-2">
             <canvas id="pitch-canvas" class="absolute inset-0 w-full h-full"></canvas>
         </div>
-        <div class="absolute top-4 right-4 text-xs text-slate-500 bg-slate-950 px-2 py-1 rounded">Target: E5 (662.2Hz)</div>
+        <div id="target-display" class="absolute top-4 right-4 text-xs text-slate-500 bg-slate-950 px-2 py-1 rounded">Target: --</div>
       </div>
 
       <!-- Volume Bar (ピークホールド付き横長バー) -->
@@ -112,11 +112,11 @@
     let mediaElementSource = null;
     let audioElement = new Audio();
     let dataArray = null;
+    let freqDataArray = null; // 🌟 毎フレーム生成を避けるための配列
     let isRunning = false;
     let isFileMode = false;
-    let lastTime = 0; // 🌟 宣言漏れを追加
+    let lastTime = 0; 
 
-    // 🌟 AudioContextの初期化関数を追加
     function initAudioContext() {
       if (!audioCtx) {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -124,11 +124,13 @@
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 2048; // 自己相関に必要な十分なバッファサイズ
         dataArray = new Float32Array(analyser.fftSize);
+        freqDataArray = new Uint8Array(analyser.frequencyBinCount); // 🌟 初期化
       }
     }
 
     // 🌟 解析パラメータと状態変数
-    const TARGET_FREQ = 662.24; // E5
+    let TARGET_FREQ = 662.24; // 🌟 変数に変更（オートで追従）
+    let TARGET_NAME = "E5";
     let peakVol = 0;
     let smoothedCents = 0;
     let smoothedOvertone = 0;
@@ -145,6 +147,27 @@
       ADV_H: { title: "音程は正確だが、響きが薄い（平坦な音）", icon: "🌫️", action: "息の量を1割増やし、アンブシュアを硬くするのではなく、「楽器の奥で音が豊かに反響する」ように息を広く深く吹き込みましょう。", targetBody: "共鳴を促す息の太さ" }
     };
 
+    // 🌟 音階テーブルと自動追従機能の追加
+    const SCALE_TABLE = [
+      {"name": "F3", "freq": 175.40}, {"name": "F#3", "freq": 185.83}, {"name": "G3", "freq": 196.88}, {"name": "Ab3", "freq": 208.59}, {"name": "A3", "freq": 221.00}, {"name": "Bb3", "freq": 234.14}, {"name": "B3", "freq": 248.06},
+      {"name": "C4", "freq": 262.81}, {"name": "C#4", "freq": 278.43}, {"name": "D4", "freq": 295.00}, {"name": "Eb4", "freq": 312.54}, {"name": "E4", "freq": 331.12}, {"name": "F4", "freq": 350.81}, {"name": "F#4", "freq": 371.67},
+      {"name": "G4", "freq": 393.76}, {"name": "Ab4", "freq": 417.18}, {"name": "A4", "freq": 442.00}, {"name": "Bb4", "freq": 468.28}, {"name": "B4", "freq": 496.13},
+      {"name": "C5", "freq": 525.63}, {"name": "C#5", "freq": 556.87}, {"name": "D5", "freq": 590.00}, {"name": "Eb5", "freq": 625.07}, {"name": "E5", "freq": 662.24}, {"name": "F5", "freq": 701.63}
+    ];
+
+    function getClosestScale(freq) {
+      let closest = SCALE_TABLE[0];
+      let minDiff = Math.abs(freq - closest.freq);
+      for(let i=1; i<SCALE_TABLE.length; i++) {
+        let diff = Math.abs(freq - SCALE_TABLE[i].freq);
+        if(diff < minDiff) {
+          minDiff = diff;
+          closest = SCALE_TABLE[i];
+        }
+      }
+      return closest;
+    }
+
     // 🌟 高精度ピッチ検出アルゴリズム (自己相関法 / YIN簡易版)
     function autoCorrelate(buf, sampleRate) {
       let SIZE = buf.length;
@@ -158,7 +181,7 @@
       for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
       for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
       
-      buf = buf.slice(r1, r2);
+      buf = buf.subarray(r1, r2); // 🌟 sliceからsubarrayに変更（より軽量・安全）
       SIZE = buf.length;
 
       let c = new Array(SIZE).fill(0);
@@ -318,8 +341,7 @@
 
       // 最新の波形データと周波数データを取得
       analyser.getFloatTimeDomainData(dataArray);
-      let freqDataArray = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(freqDataArray);
+      analyser.getByteFrequencyData(freqDataArray); // 🌟 ループ外で作成した配列を再利用
 
       let sumSq = 0;
       for (let i = 0; i < dataArray.length; i++) {
@@ -348,6 +370,12 @@
       let currentCents = 0;
       
       if (detectedFreq !== -1 && displayVol > 5.0) {
+        // 🌟 オートチューナー機能: 一番近い音階にターゲットを自動設定
+        let target = getClosestScale(detectedFreq);
+        TARGET_FREQ = target.freq;
+        TARGET_NAME = target.name;
+        document.getElementById('target-display').textContent = `Target: ${TARGET_NAME} (${TARGET_FREQ.toFixed(1)}Hz)`;
+
         // 🌟 ターゲット周波数とのズレを「セント(Cents)」単位で計算
         currentCents = 1200 * Math.log2(detectedFreq / TARGET_FREQ);
         
@@ -420,6 +448,13 @@
       }
 
       // --- 5. UI更新: ピッチメーターの描画 ---
+      // 🌟 キャンバスのピクセル解像度をCSSの表示サイズに同期させる（ぼやけ・描画不良の防止）
+      const rect = pitchCanvas.getBoundingClientRect();
+      if (pitchCanvas.width !== rect.width || pitchCanvas.height !== rect.height) {
+        pitchCanvas.width = rect.width;
+        pitchCanvas.height = rect.height;
+      }
+
       const w = pitchCanvas.width;
       const h = pitchCanvas.height;
       pitchCtx.clearRect(0, 0, w, h);
