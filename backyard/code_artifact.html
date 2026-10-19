@@ -20,6 +20,21 @@
     </button>
   </header>
 
+  <!-- 🌟デバッグ用ファイル入力パネル追加 -->
+  <div class="bg-slate-900 p-4 border-b border-slate-800">
+    <div class="text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">Debug: File Input</div>
+    <div class="flex flex-col gap-3">
+      <input type="file" id="file-input" accept="audio/*" class="text-sm text-slate-300 file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-slate-800 file:text-emerald-400 hover:file:bg-slate-700 cursor-pointer">
+      <div class="flex gap-3 items-center">
+        <button id="btn-play-file" class="bg-slate-800 text-slate-500 px-4 py-1.5 rounded-full font-bold shadow-sm text-xs transition-colors" disabled>
+          PLAY
+        </button>
+        <input type="range" id="seek-bar" value="0" min="0" max="100" step="0.1" class="flex-1 accent-emerald-500 cursor-pointer" disabled>
+        <div id="time-display" class="text-xs text-slate-400 font-mono w-12 text-right">00:00</div>
+      </div>
+    </div>
+  </div>
+
   <!-- メインコンテンツ -->
   <main class="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
     
@@ -61,12 +76,21 @@
     const diagTitle = document.getElementById('diag-title');
     const diagAction = document.getElementById('diag-action');
 
+    // 🌟デバッグ用UI要素の取得
+    const fileInput = document.getElementById('file-input');
+    const btnPlayFile = document.getElementById('btn-play-file');
+    const seekBar = document.getElementById('seek-bar');
+    const timeDisplay = document.getElementById('time-display');
+
     // --- 音声処理の変数 ---
     let audioCtx = null;
     let analyser = null;
     let microphone = null;
+    let mediaElementSource = null;
+    let audioElement = new Audio();
     let dataArray = null;
     let isRunning = false;
+    let isFileMode = false;
 
     // 解析パラメータ
     const TARGET_FREQ = 662.24; // E5
@@ -82,27 +106,131 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
+    // 🌟AudioContextの共通初期化処理
+    function initAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        dataArray = new Float32Array(analyser.fftSize);
+      }
+    }
+
+    // 🌟ファイル入力とシークバーのイベント処理
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const url = URL.createObjectURL(file);
+      audioElement.src = url;
+      audioElement.load();
+      
+      btnPlayFile.disabled = false;
+      btnPlayFile.classList.replace('text-slate-500', 'text-emerald-400');
+      seekBar.disabled = false;
+    });
+
+    audioElement.addEventListener('loadedmetadata', () => {
+      seekBar.max = audioElement.duration;
+      updateTimeDisplay(audioElement.currentTime);
+    });
+
+    audioElement.addEventListener('timeupdate', () => {
+      if (!seekBar.matches(':active')) {
+        seekBar.value = audioElement.currentTime;
+      }
+      updateTimeDisplay(audioElement.currentTime);
+    });
+
+    seekBar.addEventListener('input', () => {
+      audioElement.currentTime = seekBar.value;
+      updateTimeDisplay(audioElement.currentTime);
+    });
+
+    audioElement.addEventListener('ended', () => {
+      btnPlayFile.textContent = "PLAY";
+      btnPlayFile.classList.replace('bg-slate-700', 'bg-slate-800');
+    });
+
+    function updateTimeDisplay(current) {
+      if (isNaN(current)) return;
+      const m = Math.floor(current / 60);
+      const s = Math.floor(current % 60);
+      timeDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+
+    // 🌟ファイル再生ボタンの処理
+    btnPlayFile.addEventListener('click', () => {
+      initAudioContext();
+      
+      if (!mediaElementSource) {
+        mediaElementSource = audioCtx.createMediaElementSource(audioElement);
+      }
+
+      // マイクが動いていたらUIをリセット
+      if (isRunning && !isFileMode) {
+        if (microphone) microphone.disconnect();
+        btnStart.textContent = "MIC START";
+        btnStart.classList.replace('bg-slate-700', 'bg-emerald-500');
+      }
+
+      // ファイルソースを接続し、スマホのスピーカーからも音を出す
+      try { mediaElementSource.disconnect(); } catch(e) {}
+      try { analyser.disconnect(); } catch(e) {}
+      mediaElementSource.connect(analyser);
+      analyser.connect(audioCtx.destination); 
+
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      if (audioElement.paused) {
+        audioElement.play();
+        btnPlayFile.textContent = "PAUSE";
+        btnPlayFile.classList.replace('bg-slate-800', 'bg-slate-700');
+        isFileMode = true;
+        diagPanel.classList.remove('hidden');
+        
+        if (!isRunning) {
+          isRunning = true;
+          lastTime = audioCtx.currentTime;
+          requestAnimationFrame(processAudio);
+        }
+      } else {
+        audioElement.pause();
+        btnPlayFile.textContent = "PLAY";
+        btnPlayFile.classList.replace('bg-slate-700', 'bg-slate-800');
+      }
+    });
+
     // --- マイク起動処理 (iOSはユーザーアクション必須) ---
     btnStart.addEventListener('click', async () => {
-      if (isRunning) return;
+      if (isRunning && !isFileMode) return;
 
       try {
-        // マイクのアクセス許可を要求
         const stream = await navigator.mediaDevices.getUserMedia({ 
           audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
         });
 
-        // AudioContextの初期化
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048; // ブロックサイズ（サンプル数）
+        initAudioContext();
+
+        // ファイル再生中なら止める
+        if (isFileMode) {
+          audioElement.pause();
+          btnPlayFile.textContent = "PLAY";
+          btnPlayFile.classList.replace('bg-slate-700', 'bg-slate-800');
+        }
+
+        // マイクを接続し、スピーカー出力は切る（ハウリング防止のため超重要）
+        try { if (mediaElementSource) mediaElementSource.disconnect(); } catch(e) {}
+        try { analyser.disconnect(); } catch(e) {}
+        try { if (microphone) microphone.disconnect(); } catch(e) {}
         
         microphone = audioCtx.createMediaStreamSource(stream);
         microphone.connect(analyser);
 
-        dataArray = new Float32Array(analyser.fftSize);
-        
         isRunning = true;
+        isFileMode = false;
         btnStart.textContent = "RUNNING";
         btnStart.classList.replace('bg-emerald-500', 'bg-slate-700');
         diagPanel.classList.remove('hidden');
