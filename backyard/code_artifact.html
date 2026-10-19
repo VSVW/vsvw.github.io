@@ -62,13 +62,27 @@
           <div id="vol-peak" class="absolute top-0 bottom-0 w-1 bg-white z-10 transition-all duration-75" style="left: 0%"></div>
         </div>
       </div>
+
+      <!-- 🌟 倍音量バー (Overtone Bar) 追加 -->
+      <div class="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-inner mt-4">
+        <div class="flex justify-between items-end mb-3">
+          <div class="text-xs text-slate-400 font-bold tracking-widest">OVERTONE RICHNESS (倍音の豊かさ)</div>
+        </div>
+        <div class="relative h-4 bg-slate-950 rounded-full border border-slate-800 overflow-hidden shadow-inner">
+          <div id="overtone-bar" class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-fuchsia-500 to-purple-500 transition-all duration-75" style="width: 0%"></div>
+        </div>
+      </div>
     </div>
 
-    <!-- 逆引き診断結果パネル -->
+    <!-- 🌟 逆引き診断結果パネルのUI拡張 -->
     <div id="diagnosis-panel" class="bg-slate-900 border border-slate-800 rounded-xl p-4 hidden">
-      <div class="text-xs text-amber-400 font-bold mb-2">リアルタイム診断</div>
+      <div class="text-xs text-amber-400 font-bold mb-2">リアルタイム診断 (コーチAI)</div>
       <div id="diag-title" class="text-lg font-bold text-slate-100 mb-2">診断中...</div>
-      <div id="diag-action" class="text-sm text-emerald-300"></div>
+      <div id="diag-action" class="text-sm text-emerald-300 font-medium mb-3"></div>
+      <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/60">
+        <span>アプローチする身体部位:</span>
+        <span id="diag-target-body" class="px-2.5 py-1 bg-slate-800 text-slate-200 font-bold rounded-full">--</span>
+      </div>
     </div>
 
   </main>
@@ -78,6 +92,7 @@
     const btnStart = document.getElementById('btn-start');
     const volBar = document.getElementById('vol-bar');
     const volPeak = document.getElementById('vol-peak');
+    const overtoneBar = document.getElementById('overtone-bar');
     const pitchCanvas = document.getElementById('pitch-canvas');
     const pitchCtx = pitchCanvas.getContext('2d');
     const diagPanel = document.getElementById('diagnosis-panel');
@@ -100,30 +115,60 @@
     let isRunning = false;
     let isFileMode = false;
 
-    // 解析パラメータ
+    // 🌟 解析パラメータと状態変数
     const TARGET_FREQ = 662.24; // E5
-    let lastPhase = 0;
-    let lastTime = 0;
     let peakVol = 0;
+    let smoothedCents = 0;
+    let smoothedOvertone = 0;
 
-    // --- キャンバスのリサイズ処理 ---
-    function resizeCanvas() {
-      if (pitchCanvas) {
-        pitchCanvas.width = pitchCanvas.parentElement.clientWidth;
-        pitchCanvas.height = pitchCanvas.parentElement.clientHeight;
-      }
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    // 🌟 アドバイスのデータベース（フローチャートから移植）
+    const adviceDatabase = {
+      ADV_A: { title: "息の力強さ不足による低ピッチ", icon: "💨", action: "お腹（腹筋）を凹ませて圧力を加え、ホースの先を絞って水を遠くに飛ばすように「まっすぐでスピードの速い息」を楽器に送り込みましょう。", targetBody: "腹筋・呼吸圧" },
+      ADV_B: { title: "過度なアンブシュア締め付け（息詰まり）", icon: "👄", action: "唇の噛み締めを一度緩め、喉の奥をあくびをする時のように広げましょう。「フー」ではなく「ボー」と深く太い発音をするイメージで。", targetBody: "顎・アンブシュアの脱力" },
+      ADV_C: { title: "息は良好だが、アンブシュアの締めすぎ", icon: "🎺", action: "息のパワーはそのままキープしつつ、口の両口角の緊張をほんの1ミリだけ緩め、音の重心を下に落とすイメージで。", targetBody: "アンブシュア微調整" },
+      ADV_D: { title: "喉の閉塞による音の潰れ・上ずり", icon: "🧣", action: "口の中に温かいスープを含んでいるようなイメージで、口腔内と喉を大きく広げましょう。母音の「ア」または「オ」の形で。", targetBody: "口腔の容積・喉の開放" },
+      ADV_E: { title: "良い響きだが、息の支えの緩み", icon: "⚓", action: "音が鳴り始めた後も、腹圧（お腹の張り）を一定に保ち、息のスピードが最後まで衰えないように支え続けてください。", targetBody: "丹田（お腹）のキープ" },
+      ADV_F: { title: "息の収束不足（まとまりのない遅い息）", icon: "🌪️", action: "アパチュア（唇の息の出口）の穴が大きすぎる可能性があります。唇の中心をキュッと少しだけ引き締め、息の焦点を一点に絞り込んで。", targetBody: "アパチュアのコントロール" },
+      ADV_G: { title: "【理想状態】パーフェクト・トーン", icon: "👑", action: "今このときの「お腹の適度な張り」「唇の柔軟性」「口の中の広さ」のバランスを脳に記憶させましょう。", targetBody: "全身のベストバランス維持" },
+      ADV_H: { title: "音程は正確だが、響きが薄い（平坦な音）", icon: "🌫️", action: "息の量を1割増やし、アンブシュアを硬くするのではなく、「楽器の奥で音が豊かに反響する」ように息を広く深く吹き込みましょう。", targetBody: "共鳴を促す息の太さ" }
+    };
 
-    // 🌟AudioContextの共通初期化処理
-    function initAudioContext() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048;
-        dataArray = new Float32Array(analyser.fftSize);
+    // 🌟 高精度ピッチ検出アルゴリズム (自己相関法 / YIN簡易版)
+    function autoCorrelate(buf, sampleRate) {
+      let SIZE = buf.length;
+      let rms = 0;
+      for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+      rms = Math.sqrt(rms / SIZE);
+      if (rms < 0.01) return -1; // ノイズ除去
+
+      // 基本周期の探索
+      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+      for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+      for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+      
+      buf = buf.slice(r1, r2);
+      SIZE = buf.length;
+
+      let c = new Array(SIZE).fill(0);
+      for (let i = 0; i < SIZE; i++)
+        for (let j = 0; j < SIZE - i; j++)
+          c[i] = c[i] + buf[j] * buf[j + i];
+
+      let d = 0; while (c[d] > c[d + 1]) d++;
+      let maxval = -1, maxpos = -1;
+      for (let i = d; i < SIZE; i++) {
+        if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
       }
+      let T0 = maxpos;
+      if (T0 <= 0 || T0 >= SIZE - 1) return -1;
+
+      // 放物線補間で周波数の特定精度をさらに向上
+      let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+      let a = (x1 + x3 - 2 * x2) / 2;
+      let b = (x3 - x1) / 2;
+      if (a) T0 = T0 - b / (2 * a);
+
+      return sampleRate / T0;
     }
 
     // 🌟ファイル入力とシークバーのイベント処理
@@ -257,92 +302,112 @@
     function processAudio() {
       if (!isRunning) return;
 
-      const currentTime = audioCtx.currentTime;
-      const deltaTime = currentTime - lastTime;
-      const sampleRate = audioCtx.sampleRate; // ブラウザのサンプリングレート(例: 48000)
+      const sampleRate = audioCtx.sampleRate; // ブラウザのサンプリングレート
 
-      // 最新の波形データを取得
+      // 最新の波形データと周波数データを取得
       analyser.getFloatTimeDomainData(dataArray);
+      let freqDataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(freqDataArray);
 
       let sumSq = 0;
-      let iSum = 0;
-      let qSum = 0;
-
-      // 1. RMS(音量)と、IQ復調(ピッチズレ)の計算
       for (let i = 0; i < dataArray.length; i++) {
-        let signal = dataArray[i];
-        
-        // 音量計算用
-        sumSq += signal * signal;
-
-        // IQ復調用（現在のサンプルが刻む実際の時間を計算してsin/cosを生成）
-        let t = currentTime + (i / sampleRate);
-        let refSine = Math.sin(2 * Math.PI * TARGET_FREQ * t);
-        let refCosine = Math.cos(2 * Math.PI * TARGET_FREQ * t);
-
-        iSum += signal * refCosine;
-        qSum += signal * refSine;
+        sumSq += dataArray[i] * dataArray[i];
       }
 
-      // --- 音量の計算 ---
+      // --- 1. 音量 (RMS) の計算 ---
       let rms = Math.sqrt(sumSq / dataArray.length);
-      // 画面表示用にスケールアップ（感度調整）
       let displayVol = rms * 500; 
       
-      // ノイズゲート (微小な音はゼロにする)
-      if (displayVol < 2.0) {
-        displayVol = 0;
-      }
+      if (displayVol < 2.0) displayVol = 0;
 
-      // ピークホールド処理
-      if (displayVol > peakVol) {
-        peakVol = displayVol;
-      } else {
-        peakVol -= 2.0; // 減衰スピード
+      if (displayVol > peakVol) peakVol = displayVol;
+      else {
+        peakVol -= 2.0; 
         if (peakVol < 0) peakVol = 0;
       }
 
-      // 🌟UI更新: 音量バー (HTML要素による描画)
       let volPercent = Math.min(displayVol, 100);
       let peakPercent = Math.min(peakVol, 100);
       volBar.style.width = `${volPercent}%`;
       volPeak.style.left = `${peakPercent}%`;
 
-      // --- ピッチズレの計算 (IQ復調) ---
-      let freqDev = 0;
-      if (displayVol > 0 && deltaTime > 0.001) {
-        let currentPhase = Math.atan2(qSum, iSum);
-        let phaseDiff = currentPhase - lastPhase;
-
-        // アンラップ (位相の折り返し補正)
-        while (phaseDiff < -Math.PI) phaseDiff += 2 * Math.PI;
-        while (phaseDiff > Math.PI) phaseDiff -= 2 * Math.PI;
-
-        freqDev = phaseDiff / (2 * Math.PI * deltaTime);
-        lastPhase = currentPhase;
-      }
-      lastTime = currentTime;
-
-      // --- 簡単な診断ロジック ---
-      let diagTxt = "音が小さすぎます";
-      let actionTxt = "お腹からしっかり息を入れましょう。";
+      // --- 2. ピッチ (自己相関法) の計算 ---
+      let detectedFreq = autoCorrelate(dataArray, sampleRate);
+      let currentCents = 0;
       
+      if (detectedFreq !== -1 && displayVol > 5.0) {
+        // 🌟 ターゲット周波数とのズレを「セント(Cents)」単位で計算
+        currentCents = 1200 * Math.log2(detectedFreq / TARGET_FREQ);
+        
+        // オクターブ間違いや異常値の除去
+        if (Math.abs(currentCents) > 100) currentCents = smoothedCents;
+      } else {
+        currentCents = smoothedCents; // 音がない時や不明な時は維持
+      }
+      
+      // スムージング処理でメーターの動きを滑らかに
+      smoothedCents = smoothedCents * 0.8 + currentCents * 0.2;
+
+      // --- 3. 倍音量 (Overtone) の計算 ---
+      let baseEnergy = 0;
+      let overEnergy = 0;
+      let binFreq = sampleRate / analyser.fftSize;
+
+      for (let i = 0; i < freqDataArray.length; i++) {
+          let f = i * binFreq;
+          // 基音付近のエネルギー
+          if (f > TARGET_FREQ * 0.8 && f < TARGET_FREQ * 1.2) {
+              baseEnergy += freqDataArray[i]; 
+          // 2倍音以上の高次倍音エネルギー
+          } else if (f >= TARGET_FREQ * 1.8 && f < 5000) {
+              overEnergy += freqDataArray[i]; 
+          }
+      }
+      
+      let overtoneScore = 0;
+      if (baseEnergy > 0 && displayVol > 5.0) {
+          let ratio = overEnergy / baseEnergy; 
+          overtoneScore = Math.min(100, ratio * 40); // 0〜100%にスケーリング
+      }
+      smoothedOvertone = smoothedOvertone * 0.9 + overtoneScore * 0.1;
+      
+      // 倍音バーのUI更新
+      overtoneBar.style.width = `${smoothedOvertone}%`;
+
+      // --- 4. 🌟 演奏逆引きコーチAI 診断ロジック ---
+      let advId = null;
       if (displayVol >= 5.0) {
-        if (freqDev > 1.0) {
-          diagTxt = "ピッチが高い (アンブシュア締めすぎ)";
-          actionTxt = "唇の力を抜いて、口の中を広く保ちましょう。";
-        } else if (freqDev < -1.0) {
-          diagTxt = "ピッチが低い (息のスピード不足)";
-          actionTxt = "息のスピードを上げて、遠くへ飛ばすイメージで。";
+        let isVolOk = volPercent >= 35;
+        let isPitchHigh = smoothedCents > 5;   // +5セント以上
+        let isPitchLow = smoothedCents < -5;   // -5セント以下
+        let isOverOk = smoothedOvertone >= 40;
+
+        // フローチャートの分岐をコード化
+        if (!isVolOk) {
+          advId = isPitchLow ? "ADV_A" : "ADV_B";
         } else {
-          diagTxt = "✨ パーフェクト！";
-          actionTxt = "その体の使い方を記憶しましょう。";
+          if (isPitchHigh) {
+            advId = isOverOk ? "ADV_C" : "ADV_D";
+          } else if (isPitchLow) {
+            advId = isOverOk ? "ADV_E" : "ADV_F";
+          } else {
+            advId = isOverOk ? "ADV_G" : "ADV_H";
+          }
         }
       }
-      diagTitle.textContent = diagTxt;
-      diagAction.textContent = actionTxt;
 
-      // 🌟UI更新: ピッチメーターの描画 (Canvasによる針アニメーション)
+      if (advId) {
+        const diag = adviceDatabase[advId];
+        diagTitle.textContent = diag.icon + " " + diag.title;
+        diagAction.textContent = diag.action;
+        document.getElementById('diag-target-body').textContent = diag.targetBody;
+      } else {
+        diagTitle.textContent = "音が小さすぎます";
+        diagAction.textContent = "しっかりと楽器に息を吹き込んでください。";
+        document.getElementById('diag-target-body').textContent = "--";
+      }
+
+      // --- 5. UI更新: ピッチメーターの描画 ---
       const w = pitchCanvas.width;
       const h = pitchCanvas.height;
       pitchCtx.clearRect(0, 0, w, h);
@@ -365,11 +430,11 @@
       pitchCtx.lineWidth = 2;
       pitchCtx.stroke();
 
-      // 目盛りの描画 (中心0Hz、左右に±5Hzを想定)
-      for(let dev = -5; dev <= 5; dev++) {
-         let angle = -Math.PI / 2 + (dev / 5) * (Math.PI / 3); // 左右60度ずつ振る
+      // 目盛りの描画 (中心0セント、左右に±25セント)
+      for(let dev = -25; dev <= 25; dev += 5) {
+         let angle = -Math.PI / 2 + (dev / 25) * (Math.PI / 3); // 左右60度ずつ振る
          let isCenter = dev === 0;
-         let isMajor = dev % 5 === 0;
+         let isMajor = dev % 25 === 0; // ±25と0を強調表示
          let length = isCenter ? 15 : (isMajor ? 10 : 5);
          
          pitchCtx.beginPath();
@@ -380,26 +445,26 @@
          pitchCtx.stroke();
 
          // 数値ラベル
-         if (isMajor) {
+         if (isMajor || dev === 0) {
            pitchCtx.fillStyle = isCenter ? '#10b981' : '#64748b';
            pitchCtx.font = "10px sans-serif";
            pitchCtx.textAlign = "center";
            pitchCtx.textBaseline = "top";
            let textRadius = radius - length - 15;
-           pitchCtx.fillText(dev === 0 ? "0" : (dev > 0 ? "+5" : "-5"), cx + Math.cos(angle) * textRadius, cy + Math.sin(angle) * textRadius);
+           pitchCtx.fillText(dev === 0 ? "0" : (dev > 0 ? "+25" : "-25"), cx + Math.cos(angle) * textRadius, cy + Math.sin(angle) * textRadius);
          }
       }
 
       // 針（メーター）の描画
-      // 振り切れ処理（-5.5Hz ～ +5.5Hz で針を止める）
-      let displayDev = Math.max(-5.5, Math.min(5.5, freqDev));
-      let meterAngle = -Math.PI / 2 + (displayDev / 5) * (Math.PI / 3);
+      // 振り切れ処理（±26セントで針を止める）
+      let displayDev = Math.max(-26, Math.min(26, smoothedCents));
+      let meterAngle = -Math.PI / 2 + (displayDev / 25) * (Math.PI / 3);
       
       pitchCtx.beginPath();
       pitchCtx.moveTo(cx, cy);
       pitchCtx.lineTo(cx + Math.cos(meterAngle) * (radius - 5), cy + Math.sin(meterAngle) * (radius - 5));
-      // 0.5Hz以内なら緑、2Hz以内なら黄、それ以上は赤
-      pitchCtx.strokeStyle = Math.abs(displayDev) < 0.5 ? '#10b981' : (Math.abs(displayDev) < 2 ? '#eab308' : '#ef4444');
+      // ±5セント以内なら緑、±15セント以内なら黄、それ以上は赤
+      pitchCtx.strokeStyle = Math.abs(displayDev) < 5 ? '#10b981' : (Math.abs(displayDev) < 15 ? '#eab308' : '#ef4444');
       pitchCtx.lineWidth = 3;
       pitchCtx.lineCap = "round";
       pitchCtx.stroke();
@@ -414,13 +479,13 @@
       pitchCtx.stroke();
 
       // 現在の正確な数値をキャンバス内（針の根元上部）にも描画
-      pitchCtx.fillStyle = Math.abs(displayDev) < 0.5 ? '#10b981' : '#94a3b8';
+      pitchCtx.fillStyle = Math.abs(displayDev) < 5 ? '#10b981' : '#94a3b8';
       pitchCtx.font = "bold 22px monospace";
       pitchCtx.textAlign = "center";
-      pitchCtx.fillText((freqDev > 0 ? "+" : "") + freqDev.toFixed(1), cx, cy - radius / 2 - 10);
+      pitchCtx.fillText((smoothedCents > 0 ? "+" : "") + smoothedCents.toFixed(1), cx, cy - radius / 2 - 10);
       pitchCtx.font = "10px sans-serif";
       pitchCtx.fillStyle = '#64748b';
-      pitchCtx.fillText("Hz", cx, cy - radius / 2 + 5);
+      pitchCtx.fillText("cent", cx, cy - radius / 2 + 5);
 
       requestAnimationFrame(processAudio);
     }
