@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Wind Instrument Coach</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #020617; color: #f8fafc; font-family: sans-serif; overscroll-behavior: none; }
+    canvas { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+  <!-- ヘッダー -->
+  <header class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+    <h1 class="font-bold text-lg text-emerald-400">Wind Coach PWA</h1>
+    <button id="btn-start" class="bg-emerald-500 text-slate-900 px-4 py-2 rounded-full font-bold shadow-lg active:scale-95 transition-transform">
+      MIC START
+    </button>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
+    
+    <!-- 測定値表示パネル -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+        <div class="text-xs text-slate-400 mb-1">Volume (RMS)</div>
+        <div id="val-vol" class="text-2xl font-mono text-cyan-400">0.0</div>
+      </div>
+      <div class="bg-slate-900 p-4 rounded-xl border border-slate-800">
+        <div class="text-xs text-slate-400 mb-1">Pitch Dev (Hz)</div>
+        <div id="val-pitch" class="text-2xl font-mono text-yellow-400">0.0</div>
+      </div>
+    </div>
+
+    <!-- メーター描画キャンバス -->
+    <div class="bg-slate-900 rounded-xl border border-slate-800 p-2 h-48 relative">
+      <div class="absolute top-2 left-2 text-xs text-slate-500">Target: 662.2 Hz (E5)</div>
+      <canvas id="meter-canvas"></canvas>
+    </div>
+
+    <!-- 逆引き診断結果パネル -->
+    <div id="diagnosis-panel" class="bg-slate-900 border border-slate-800 rounded-xl p-4 hidden">
+      <div class="text-xs text-amber-400 font-bold mb-2">リアルタイム診断</div>
+      <div id="diag-title" class="text-lg font-bold text-slate-100 mb-2">診断中...</div>
+      <div id="diag-action" class="text-sm text-emerald-300"></div>
+    </div>
+
+  </main>
+
+  <script>
+    // --- UI要素の取得 ---
+    const btnStart = document.getElementById('btn-start');
+    const valVol = document.getElementById('val-vol');
+    const valPitch = document.getElementById('val-pitch');
+    const canvas = document.getElementById('meter-canvas');
+    const ctx = canvas.getContext('2d');
+    const diagPanel = document.getElementById('diagnosis-panel');
+    const diagTitle = document.getElementById('diag-title');
+    const diagAction = document.getElementById('diag-action');
+
+    // --- 音声処理の変数 ---
+    let audioCtx = null;
+    let analyser = null;
+    let microphone = null;
+    let dataArray = null;
+    let isRunning = false;
+
+    // 解析パラメータ
+    const TARGET_FREQ = 662.24; // E5
+    let lastPhase = 0;
+    let lastTime = 0;
+    let peakVol = 0;
+
+    // --- キャンバスのリサイズ処理 ---
+    function resizeCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // --- マイク起動処理 (iOSはユーザーアクション必須) ---
+    btnStart.addEventListener('click', async () => {
+      if (isRunning) return;
+
+      try {
+        // マイクのアクセス許可を要求
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
+        });
+
+        // AudioContextの初期化
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048; // ブロックサイズ（サンプル数）
+        
+        microphone = audioCtx.createMediaStreamSource(stream);
+        microphone.connect(analyser);
+
+        dataArray = new Float32Array(analyser.fftSize);
+        
+        isRunning = true;
+        btnStart.textContent = "RUNNING";
+        btnStart.classList.replace('bg-emerald-500', 'bg-slate-700');
+        diagPanel.classList.remove('hidden');
+
+        lastTime = audioCtx.currentTime;
+        requestAnimationFrame(processAudio);
+
+      } catch (err) {
+        alert("マイクへのアクセスが拒否されたか、エラーが発生しました: " + err.message);
+      }
+    });
+
+    // --- メイン解析・描画ループ ---
+    function processAudio() {
+      if (!isRunning) return;
+
+      const currentTime = audioCtx.currentTime;
+      const deltaTime = currentTime - lastTime;
+      const sampleRate = audioCtx.sampleRate; // ブラウザのサンプリングレート(例: 48000)
+
+      // 最新の波形データを取得
+      analyser.getFloatTimeDomainData(dataArray);
+
+      let sumSq = 0;
+      let iSum = 0;
+      let qSum = 0;
+
+      // 1. RMS(音量)と、IQ復調(ピッチズレ)の計算
+      for (let i = 0; i < dataArray.length; i++) {
+        let signal = dataArray[i];
+        
+        // 音量計算用
+        sumSq += signal * signal;
+
+        // IQ復調用（現在のサンプルが刻む実際の時間を計算してsin/cosを生成）
+        let t = currentTime + (i / sampleRate);
+        let refSine = Math.sin(2 * Math.PI * TARGET_FREQ * t);
+        let refCosine = Math.cos(2 * Math.PI * TARGET_FREQ * t);
+
+        iSum += signal * refCosine;
+        qSum += signal * refSine;
+      }
+
+      // --- 音量の計算 ---
+      let rms = Math.sqrt(sumSq / dataArray.length);
+      // 画面表示用にスケールアップ（感度調整）
+      let displayVol = rms * 500; 
+      
+      // ノイズゲート (微小な音はゼロにする)
+      if (displayVol < 2.0) {
+        displayVol = 0;
+      }
+
+      // ピークホールド処理
+      if (displayVol > peakVol) {
+        peakVol = displayVol;
+      } else {
+        peakVol -= 2.0; // 減衰スピード
+        if (peakVol < 0) peakVol = 0;
+      }
+
+      valVol.textContent = displayVol.toFixed(1);
+
+      // --- ピッチズレの計算 (IQ復調) ---
+      let freqDev = 0;
+      if (displayVol > 0 && deltaTime > 0.001) {
+        let currentPhase = Math.atan2(qSum, iSum);
+        let phaseDiff = currentPhase - lastPhase;
+
+        // アンラップ (位相の折り返し補正)
+        while (phaseDiff < -Math.PI) phaseDiff += 2 * Math.PI;
+        while (phaseDiff > Math.PI) phaseDiff -= 2 * Math.PI;
+
+        freqDev = phaseDiff / (2 * Math.PI * deltaTime);
+        lastPhase = currentPhase;
+      }
+      valPitch.textContent = (freqDev > 0 ? "+" : "") + freqDev.toFixed(2);
+      lastTime = currentTime;
+
+      // --- 簡単な診断ロジック ---
+      let diagTxt = "音が小さすぎます";
+      let actionTxt = "お腹からしっかり息を入れましょう。";
+      
+      if (displayVol >= 5.0) {
+        if (freqDev > 1.0) {
+          diagTxt = "ピッチが高い (アンブシュア締めすぎ)";
+          actionTxt = "唇の力を抜いて、口の中を広く保ちましょう。";
+        } else if (freqDev < -1.0) {
+          diagTxt = "ピッチが低い (息のスピード不足)";
+          actionTxt = "息のスピードを上げて、遠くへ飛ばすイメージで。";
+        } else {
+          diagTxt = "✨ パーフェクト！";
+          actionTxt = "その体の使い方を記憶しましょう。";
+        }
+      }
+      diagTitle.textContent = diagTxt;
+      diagAction.textContent = actionTxt;
+
+      // --- メーターの描画 (Canvas) ---
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // バーの描画
+      const barWidth = 60;
+      const x = (w - barWidth) / 2;
+      const barHeight = Math.min((displayVol / 100) * h, h);
+      
+      ctx.fillStyle = displayVol > 80 ? '#ef4444' : displayVol > 50 ? '#eab308' : '#22c55e';
+      ctx.fillRect(x, h - barHeight, barWidth, barHeight);
+
+      // ピーク線の描画
+      const peakY = h - Math.min((peakVol / 100) * h, h);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x, peakY, barWidth, 3);
+
+      requestAnimationFrame(processAudio);
+    }
+  </script>
+</body>
+</html>
