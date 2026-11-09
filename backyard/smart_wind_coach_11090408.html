@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Smart Wind Coach</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <!-- VexFlow (高精度楽譜描画ライブラリ) の読み込み -->
+  <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.3/build/cjs/vexflow.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+}
+</style>
+  <style>
+    .hidden{
+      display: none;
+    }
+    body { background-color: #f0f0f0; color: #101010; font-family: 'Roboto','San Francisco','Hiragino Kaku Gothic ProN','Meiryo',sans-serif; overscroll-behavior: none; }
+    canvas { display: block; width: 100%; height: 100%; }
+    
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: flex; flex-direction: column; }
+    @keyframes fadeIn { from { opacity: 0; transform: tranzincY(5px); } to { opacity: 1; transform: tranzincY(0); } }
+
+    /* 横スクロール対応の五線譜コンテナ */
+    .stave-wrapper {
+      width: 100%;
+      height: 160px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      background-color: #f0f0f0;
+      border: 1px solid #101010;
+      border-radius: 0.5rem;
+      position: relative;
+    }
+    
+    .stave-scroll-content {
+      position: relative;
+      height: 100%;
+      min-width: 100%;
+      display: inline-block;
+    }
+
+    .karaoke-bar {
+      position: absolute;
+      top: 0; bottom: 0; left: 80px; /* 初期位置、JSで上書きされます */
+      background-color: rgba(16, 185, 129, 0.2);
+      border-right: 2px solid #fb923c;
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+  <!-- ヘッダー -->
+  <header class="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-100 z-20">
+    <h1 class="font-bold text-lg text-orange-400">ToneCoach</h1>
+    <div class="flex gap-2">
+      <input type="file" id="file-input" accept="audio/*" class="hidden">
+      <button id="btn-file" class="bg-zinc-300 hover:bg-zinc-400 text-white px-3 py-1.5 text-sm rounded font-bold shadow-lg transition-colors">
+        <span class="material-symbols-outlined">audio_file</span>
+      </button>
+      <button id="btn-start" class="border border-orange-500 hover:border-orange-400 text-zinc-900 px-4 py-1.5 rounded-full font-bold shadow-lg transition-colors flex items-center gap-1">
+        <span class="material-symbols-outlined" id="mic_status">mic_off</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- タブナビゲーション -->
+  <nav class="bg-zinc-100 border-b border-zinc-800 flex">
+    <button class="tab-btn flex-1 py-3 text-sm font-bold text-orange-400 border-b-2 border-orange-400" data-target="tab-free">自由練習</button>
+    <button class="tab-btn flex-1 py-3 text-sm font-bold text-zinc-400 border-b-2 border-transparent hover:text-zinc-200" data-target="tab-chromatic">半音階</button>
+    <button class="tab-btn flex-1 py-3 text-sm font-bold text-zinc-400 border-b-2 border-transparent hover:text-zinc-200" data-target="tab-scale">スケール</button>
+  </nav>
+
+  <!-- メインコンテンツ領域 -->
+  <main class="flex-1 overflow-y-auto relative bg-zinc-150">
+    
+    <!-- タブ1: 自由練習 -->
+    <div id="tab-free" class="tab-content active p-4 gap-4 h-full">
+      <div class="flex flex-col gap-4">
+        <!-- Pitch Meter -->
+        <div class="bg-zinc-100 rounded-xl border border-zinc-800 p-4 relative flex flex-col items-center shadow-inner">
+          <div class="text-zinc-400 mb-2 font-bold w-full tracking-widest flex">
+            <span id="target-display" class="text-4xl w-full text-center">--</span>
+          </div>
+          <div class="relative w-full max-w-md aspect-[2/1] mt-2">
+              <canvas id="pitch-canvas" class="absolute inset-0 w-full h-full"></canvas>
+          </div>
+        </div>
+
+        <!-- Volume Graph -->
+        <div class="bg-zinc-100 rounded-xl border border-zinc-800 p-4 shadow-inner">
+          <div class="flex justify-between items-end mb-3">
+            <div class="text-xs text-zinc-400 font-bold tracking-widest">音量変化</div>
+          </div>
+          <div class="relative h-60 bg-zinc-150 rounded border border-zinc-800 overflow-hidden shadow-inner">
+            <canvas id="vol-canvas" class="absolute inset-0 w-full h-full"></canvas>
+          </div>
+        </div>
+        <!-- Overtone Bar -->
+        <div class="bg-zinc-100 rounded-xl border border-zinc-800 p-4 shadow-inner">
+          <div class="flex justify-between items-end mb-3">
+            <div class="text-xs text-zinc-400 font-bold tracking-widest">倍音の豊かさ</div>
+          </div>
+          <div class="relative h-4 bg-zinc-150 rounded-full border border-zinc-800 overflow-hidden shadow-inner">
+            <div id="overtone-bar" class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-fuchsia-500 to-purple-500 transition-all duration-75" style="width: 0%"></div>
+          </div>
+        </div>
+        
+        <!-- Tone Quality (High-Freq Attenuation) -->
+        <div class="bg-zinc-100 rounded-xl border border-zinc-800 p-4 shadow-inner flex justify-between items-center">
+          <div class="text-xs text-zinc-400 font-bold tracking-widest">音色の深み (高音域の減衰)</div>
+          <div id="tone-status" class="text-sm font-bold text-zinc-500 px-3 py-1 rounded bg-zinc-200">　--　</div>
+        </div>
+      </div>
+      <!-- 逆引き診断結果パネル -->
+      <div id="diagnosis-panel" class="bg-zinc-100 border border-zinc-800 rounded-xl p-4 mt-auto">
+        <div class="text-xs text-amber-400 font-bold mb-2">リアルタイム診断 (コーチAI)</div>
+        <div id="diag-title" class="text-lg font-bold text-zinc-100 mb-2">音声を入力してください</div>
+        <div id="diag-action" class="text-sm text-orange-300 font-medium mb-3">...</div>
+      </div>
+    </div>
+
+    <!-- タブ2: 半音階トレーニング -->
+    <div id="tab-chromatic" class="tab-content p-4 gap-4 h-full">
+      <div class="bg-zinc-100 border border-zinc-800 rounded-xl p-4">
+        <div class="flex flex-wrap gap-4 items-end">
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">テンポ</label>
+            <input type="number" id="chr-bpm" value="72" class="w-20 bg-zinc-200 border border-zinc-900 rounded px-2 py-1 text-zinc-900 text-center">
+          </div>
+          <button id="btn-start-chromatic" class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-1.5 rounded-full font-bold shadow transition-colors ml-auto">
+            練習スタート
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-zinc-100 border border-zinc-800 rounded-xl p-4 relative overflow-hidden flex-1 flex flex-col">
+        <!--<div class="text-xs text-zinc-400 mb-4 font-bold tracking-widest flex justify-between">-->
+        <div class="hidden">
+          <span>譜面</span>
+          <span id="chr-status" class="text-orange-400">待機中</span>
+        </div>
+        
+        <!-- VexFlowによる楽譜表示コンテナ -->
+        <div class="stave-wrapper">
+          <div class="stave-scroll-content" id="chr-scroll-container">
+            <div id="chr-karaoke-bar" class="karaoke-bar" style="width: 0%;"></div>
+            <div id="chr-notes-container" class="relative z-20 vexflow-svg pt-4"></div>
+          </div>
+        </div>
+
+        <div class="mt-8 flex justify-center items-center flex-col">
+          <div class="text-sm text-zinc-400 mb-1">現在のターゲット実音</div>
+          <div id="chr-target-display" class="text-4xl font-bold text-white font-mono">--</div>
+          <div id="chr-pitch-feedback" class="mt-2 text-lg font-bold text-zinc-500">...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- タブ3: スケールトレーニング -->
+    <div id="tab-scale" class="tab-content p-4 gap-4 h-full">
+      <div class="bg-zinc-100 border border-zinc-800 rounded-xl p-4">
+        <div class="flex flex-wrap gap-4 items-end">
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">調性</label>
+            <select class="bg-zinc-200 border border-zinc-900 rounded px-2 py-1 text-zinc-900" disabled>
+              <option>B♭メジャー</option>
+              <option>E♭メジャー</option>
+              <option>F♭メジャー</option>
+              <option>A♭メジャー</option>
+              <option>Cメジャー</option>
+              <option>Gメジャー</option>
+              <option>Dメジャー</option>
+              <option>Aメジャー</option>
+              <option>D♭メジャー</option>
+              <option>G♭メジャー</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-zinc-600 mb-1">テンポ</label>
+            <input type="number" id="scl-bpm" value="96" class="w-20 bg-zinc-200 border border-zinc-900 rounded px-2 py-1 text-zinc-900 text-center">
+          </div>
+          <button id="btn-start-scale" class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-1.5 rounded-full font-bold shadow transition-colors ml-auto">
+            練習スタート
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-zinc-100 border border-zinc-800 rounded-xl p-4 relative overflow-hidden flex-1 flex flex-col">
+        <!--<div class="text-xs text-zinc-400 mb-4 font-bold tracking-widest flex justify-between">-->
+        <div class="hidden">
+          <span id="scl-status" class="text-orange-400">待機中</span>
+        </div>
+        
+        <!-- VexFlowによる楽譜表示コンテナ -->
+        <div class="stave-wrapper">
+          <div class="stave-scroll-content" id="scl-scroll-container">
+            <div id="scl-karaoke-bar" class="karaoke-bar" style="width: 0%;"></div>
+            <div id="scl-notes-container" class="relative z-20 vexflow-svg pt-4"></div>
+          </div>
+        </div>
+
+        <div class="mt-8 flex justify-center items-center flex-col">
+          <div class="text-sm text-zinc-400 mb-1">現在のターゲット実音</div>
+          <div id="scl-target-display" class="text-4xl font-bold text-white font-mono">--</div>
+          <div id="scl-pitch-feedback" class="mt-2 text-lg font-bold text-zinc-500">...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 練習結果モーダル -->
+    <div id="result-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden backdrop-blur-sm p-4">
+      <div class="bg-zinc-50 border border-zinc-700 rounded-2xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col">
+        <h2 class="text-2xl font-bold text-zinc-900 mb-1 text-center">練習完了！</h2>
+        <p class="text-orange-500 text-sm font-bold text-center mb-4">ADSR解析＆スコア結果</p>
+        
+        <div class="flex-1 overflow-y-auto mb-4 bg-white rounded-lg border border-zinc-300 shadow-inner">
+          <table class="w-full text-sm text-center text-zinc-700">
+            <thead class="text-xs text-zinc-100 uppercase bg-zinc-800 sticky top-0">
+              <tr>
+                <th class="px-2 py-2">音符</th>
+                <th class="px-2 py-2">ピッチ(cent)</th>
+                <th class="px-2 py-2">A<br><span class="text-[10px]">立ち上がり</span></th>
+                <th class="px-2 py-2">D<br><span class="text-[10px]">減衰</span></th>
+                <th class="px-2 py-2">S<br><span class="text-[10px]">持続</span></th>
+                <th class="px-2 py-2">R<br><span class="text-[10px]">余韻</span></th>
+                <th class="px-2 py-2">Tone<br><span class="text-[10px]">音色</span></th>
+              </tr>
+            </thead>
+            <tbody id="result-table-body" class="divide-y divide-zinc-200">
+              <!-- JSで挿入 -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="bg-orange-50 p-4 rounded-lg border border-orange-200 mb-4">
+          <div class="text-xs text-orange-600 font-bold mb-2">AIコーチからのフィードバック</div>
+          <p id="result-feedback" class="text-sm text-zinc-800 leading-relaxed"></p>
+        </div>
+
+        <button id="btn-close-modal" class="w-full bg-zinc-800 hover:bg-zinc-700 text-white py-3 rounded-xl font-bold transition-colors mt-auto">
+          閉じる
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /* ==========================================
+       1. 全体設定・状態変数
+       ========================================== */
+    let audioCtx, analyser, microphone, audioSource;
+    let isRunning = false;
+    let currentMode = 'free'; 
+    let isFileMode = false;
+    
+    // UI Elements
+    // UI Elements
+    const pitchCanvas = document.getElementById('pitch-canvas');
+    const pitchCtx = pitchCanvas.getContext('2d');
+    const volCanvas = document.getElementById('vol-canvas'); // 🌟追加: 音量グラフ用キャンバス
+    const volCtx = volCanvas ? volCanvas.getContext('2d') : null;
+    const overtoneBar = document.getElementById('overtone-bar');
+    
+    let volHistory = []; // 🌟追加: 音量の履歴 {time: ms, db: number}
+    
+    let currentNoteData = []; // 🌟追加: ADSR解析用の現在音符の履歴
+    let isRecordingNote = false;
+    let noteRecordings = [];
+    
+    let targetFreq = 442.0; // 🌟変更: 日本の吹奏楽基準 (A=442Hz)
+    let targetName = "A4";
+    let smoothedCents = 0;
+    let smoothedOvertone = 0;
+    let currentToneOk = false; // 🌟追加: 音色が良いかどうかのリアルタイム判定
+    let peakVolPercent = 0;
+    let lastTime = 0;
+
+    // タブ切り替えロジック
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('text-orange-400', 'border-orange-400');
+          b.classList.add('text-zinc-400', 'border-transparent');
+        });
+        btn.classList.add('text-orange-400', 'border-orange-400');
+        btn.classList.remove('text-zinc-400', 'border-transparent');
+        
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.getElementById(btn.dataset.target).classList.add('active');
+        currentMode = btn.dataset.target.replace('tab-', '');
+      });
+    });
+
+    /* ==========================================
+       2. 高精度ピッチ検出 (YINアルゴリズム完全版)
+       ========================================== */
+    function yin(buffer, sampleRate) {
+      const halfBufferSize = Math.floor(buffer.length / 2);
+      const yinBuffer = new Float32Array(halfBufferSize);
+      yinBuffer[0] = 1;
+      let runningSum = 0;
+
+      for (let t = 1; t < halfBufferSize; t++) {
+        let sum = 0;
+        for (let i = 0; i < halfBufferSize; i++) {
+          const delta = buffer[i] - buffer[i + t];
+          sum += delta * delta;
+        }
+        runningSum += sum;
+        yinBuffer[t] = sum * t / runningSum;
+      }
+
+      let tau = -1;
+      const threshold = 0.2; 
+      for (let t = 2; t < halfBufferSize; t++) {
+        if (yinBuffer[t] < threshold) {
+          while (t + 1 < halfBufferSize && yinBuffer[t + 1] < yinBuffer[t]) {
+            t++;
+          }
+          tau = t;
+          break;
+        }
+      }
+
+      if (tau === -1) {
+        let minVal = Infinity;
+        for (let t = 2; t < halfBufferSize; t++) {
+          if (yinBuffer[t] < minVal) {
+            minVal = yinBuffer[t];
+            tau = t;
+          }
+        }
+        if (minVal > 0.5) return -1; 
+      }
+
+      let betterTau = tau;
+      if (tau > 0 && tau < halfBufferSize - 1) {
+        const s0 = yinBuffer[tau - 1];
+        const s1 = yinBuffer[tau];
+        const s2 = yinBuffer[tau + 1];
+        betterTau = tau + (s2 - s0) / (2 * (2 * s1 - s2 - s0));
+      }
+
+      return sampleRate / betterTau;
+    }
+
+    /* ==========================================
+       3. オーディオ処理ループ
+       ========================================== */
+    function initAudioContext() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048; 
+    }
+
+    function processAudio(time) {
+      if (!isRunning) return;
+
+      const dt = time - lastTime;
+      if (dt < 30) { requestAnimationFrame(processAudio); return; }
+      lastTime = time;
+
+      const bufferLength = analyser.fftSize;
+      const timeData = new Float32Array(bufferLength);
+      analyser.getFloatTimeDomainData(timeData);
+
+      // RMS音量の計算
+      let sumSquares = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        sumSquares += timeData[i] * timeData[i];
+      }
+      const rms = Math.sqrt(sumSquares / bufferLength);
+      const displayVol = rms * 200.0;
+      const volPercent = Math.min(100, displayVol * 2);
+
+      // 🌟【変更】ボリューム履歴の保存（対数dBに変換し、直近3秒分を保持）
+      const currentDb = rms > 0.0001 ? 20 * Math.log10(rms) : -60;
+      volHistory.push({ time: time, db: Math.max(-60, currentDb) });
+      
+      // 3秒（3000ms）より古いデータを削除
+      while (volHistory.length > 0 && time - volHistory[0].time > 3000) {
+          volHistory.shift();
+      }
+
+      // YINによるピッチ検出
+      const pitch = yin(timeData, audioCtx.sampleRate);
+      let centsDiff = 0;
+
+      if (isRecordingNote) {
+          currentNoteData.push({ time: performance.now(), db: Math.max(-60, currentDb), cents: centsDiff });
+      }
+
+      // オートチューナー (自由練習モード時のみ)
+      if (pitch > 50 && pitch < 2000 && currentMode === 'free' && displayVol > 5.0) {
+        let minDiff = Infinity;
+        let bestScale = null;
+        const scaleTable = [
+          {name:"F3", freq:175.41}, {name:"Gb3", freq:185.83}, {name:"G3", freq:196.88}, {name:"Ab3", freq:208.57}, {name:"A3", freq:221.00}, {name:"Bb3", freq:234.14}, {name:"B3", freq:248.06},
+          {name:"C4", freq:262.81}, {name:"Db4", freq:278.44}, {name:"D4", freq:294.99}, {name:"Eb4", freq:312.53}, {name:"E4", freq:331.13}, {name:"F4", freq:350.82}, {name:"Gb4", freq:371.66},
+          {name:"G4", freq:393.75}, {name:"Ab4", freq:417.14}, {name:"A4", freq:442.00}, {name:"Bb4", freq:468.28}, {name:"B4", freq:496.13},
+          {name:"C5", freq:525.63}, {name:"Db5", freq:556.89}, {name:"D5", freq:589.98}, {name:"Eb5", freq:625.06}, {name:"E5", freq:662.25}, {name:"F5", freq:701.63}
+        ];
+        
+        scaleTable.forEach(s => {
+          let cents = 1200 * Math.log2(pitch / s.freq);
+          if (Math.abs(cents) < minDiff) {
+            minDiff = Math.abs(cents);
+            bestScale = s;
+          }
+        });
+        
+        if (minDiff < 50) {
+          targetFreq = bestScale.freq;
+          targetName = bestScale.name;
+          document.getElementById('target-display').textContent = `${targetName}`;
+        }
+      }
+
+      // ピッチ偏差の計算 (セント)
+      if (pitch !== -1 && displayVol > 5.0) {
+        centsDiff = 1200 * Math.log2(pitch / targetFreq);
+        smoothedCents = smoothedCents * 0.7 + centsDiff * 0.3;
+      } else {
+        smoothedCents *= 0.9; 
+      }
+
+      // FFTによる倍音量計算と音色評価
+      const freqData = new Float32Array(analyser.frequencyBinCount);
+      analyser.getFloatFrequencyData(freqData);
+      
+      let baseEnergy = 0, overEnergy = 0;
+      let maxDbOverall = -Infinity;
+      let maxDbAbove3k = -Infinity;
+      
+      const binWidth = audioCtx.sampleRate / analyser.fftSize;
+      
+      for (let i = 0; i < freqData.length; i++) {
+        let f = i * binWidth;
+        let db = freqData[i];
+        
+        // 音色評価用の最大音量検出
+        if (db > maxDbOverall) maxDbOverall = db;
+        if (f >= 3000 && db > maxDbAbove3k) maxDbAbove3k = db;
+
+        // 倍音スコア計算用
+        let mag = Math.pow(10, db / 20);
+        if (f > targetFreq * 0.8 && f < targetFreq * 1.2) baseEnergy += mag;
+        if (f > targetFreq * 1.5 && f < targetFreq * 4.5) overEnergy += mag;
+      }
+      
+      let overtoneScore = (baseEnergy > 0 && displayVol > 5.0) ? Math.min(100, (overEnergy / baseEnergy) * 40) : 0;
+      smoothedOvertone = smoothedOvertone * 0.9 + overtoneScore * 0.1;
+      overtoneBar.style.width = `${smoothedOvertone}%`;
+
+      // 🌟【追加】音色判定：全体の最大音量に対して、3kHz以上の最大音量が20dB以上低いか
+      currentToneOk = (maxDbOverall - maxDbAbove3k >= 20);
+
+      // 録音中であれば、ADSR用データと一緒に音色の判定結果も保存する
+      if (isRecordingNote) {
+          currentNoteData.push({ 
+              time: performance.now(), 
+              db: Math.max(-60, currentDb), 
+              cents: centsDiff,
+              toneOk: currentToneOk 
+          });
+      }
+
+      // 自由練習モードの画面描画
+      if (currentMode === 'free') {
+        drawPitchMeter();
+        drawVolumeGraph(time); 
+        
+        const toneEl = document.getElementById('tone-status');
+        if (displayVol >= 5.0) {
+          updateDiagnosis(displayVol, volPercent, smoothedCents, smoothedOvertone, currentToneOk);
+          if (currentToneOk) {
+             toneEl.textContent = "GOOD";
+             toneEl.className = "text-sm font-bold text-white px-3 py-1 rounded bg-emerald-500";
+          } else {
+             toneEl.textContent = "鋭い (Hard)";
+             toneEl.className = "text-sm font-bold text-white px-3 py-1 rounded bg-red-500";
+          }
+        } else {
+          toneEl.textContent = "判定待機";
+          toneEl.className = "text-sm font-bold text-zinc-500 px-3 py-1 rounded bg-zinc-200";
+        }
+      }
+
+      requestAnimationFrame(processAudio);
+    }
+
+    /* ==========================================
+       4. UI描画・診断
+       ========================================== */
+    function drawPitchMeter() {
+      const rect = pitchCanvas.getBoundingClientRect();
+      if (pitchCanvas.width !== rect.width || pitchCanvas.height !== rect.height) {
+        pitchCanvas.width = rect.width; pitchCanvas.height = rect.height;
+      }
+      const w = pitchCanvas.width, h = pitchCanvas.height;
+      pitchCtx.clearRect(0, 0, w, h);
+
+      const cx = w / 2, cy = h - 5;
+      const radius = Math.min(cx - 20, h - 30);
+
+      pitchCtx.beginPath(); pitchCtx.arc(cx, cy, radius, Math.PI, 0);
+      //pitchCtx.fillStyle = '#e4e4e7'; pitchCtx.fill();
+      pitchCtx.beginPath(); pitchCtx.arc(cx, cy, radius, Math.PI, 0);
+      pitchCtx.strokeStyle = '#9f9fa9'; pitchCtx.lineWidth = 2; pitchCtx.stroke();
+
+      for(let dev = -50; dev <= 50; dev += 5) {
+         let angle = -Math.PI / 2 + (dev / 25) * (Math.PI / 6); 
+         let isCenter = dev === 0, isMajor = dev % 50 === 0; 
+         let length = isCenter ? 15 : (isMajor ? 15 : (dev % 10 === 0 ? 8: 2));
+         
+         pitchCtx.beginPath();
+         pitchCtx.moveTo(cx + Math.cos(angle) * radius, cy + Math.sin(angle) * radius);
+         pitchCtx.lineTo(cx + Math.cos(angle) * (radius - length), cy + Math.sin(angle) * (radius - length));
+         pitchCtx.strokeStyle = isCenter ? '#fb923c' : (isMajor ? '#64748b' : '#334155');
+         pitchCtx.lineWidth = isCenter ? 3 : 2; pitchCtx.stroke();
+
+         if (isMajor || dev === 0) {
+           pitchCtx.fillStyle = isCenter ? '#fb923c' : '#64748b';
+           pitchCtx.font = "15px sans-serif"; pitchCtx.textAlign = "center"; pitchCtx.textBaseline = "top";
+           let textRadius = radius - length + 40;
+           pitchCtx.fillText(dev === 0 ? "▼" : (dev > 0 ? "+50" : "-50"), cx + Math.cos(angle) * textRadius, cy + Math.sin(angle) * textRadius);
+         }
+      }
+
+      let displayDev = Math.max(-51, Math.min(51, smoothedCents));
+      let meterAngle = -Math.PI / 2 + (displayDev / 25) * (Math.PI / 6);
+      pitchCtx.beginPath(); pitchCtx.moveTo(cx, cy);
+      pitchCtx.lineTo(cx + Math.cos(meterAngle) * (radius - 20), cy + Math.sin(meterAngle) * (radius - 20));
+      pitchCtx.strokeStyle = Math.abs(displayDev) < 5 ? '#fb923c' : (Math.abs(displayDev) < 15 ? '#eab308' : '#ef4444');
+      pitchCtx.lineWidth = 3; pitchCtx.lineCap = "round"; pitchCtx.stroke();
+
+      pitchCtx.beginPath(); pitchCtx.arc(cx, cy, 8, 0, Math.PI * 2);
+      pitchCtx.fillStyle = '#1e293b'; pitchCtx.fill(); pitchCtx.strokeStyle = '#475569'; pitchCtx.lineWidth = 2; pitchCtx.stroke();
+      pitchCtx.clearRect(0,rect.height - 60, rect.width, 60);
+
+      pitchCtx.fillStyle = Math.abs(displayDev) < 5 ? '#fb923c' : '#94a3b8';
+      pitchCtx.font = "bold 32px Roboto"; pitchCtx.textAlign = "center";
+      pitchCtx.fillText((smoothedCents > 0 ? "+" : "") + Math.floor(smoothedCents.toFixed(1)), cx, cy - 40);
+    }
+    // 🌟音量グラフ描画ロジック
+    function drawVolumeGraph(currentTime) {
+      if (!volCanvas || !volCtx || volHistory.length === 0) return;
+      const rect = volCanvas.getBoundingClientRect();
+      if (volCanvas.width !== rect.width || volCanvas.height !== rect.height) {
+        volCanvas.width = rect.width; volCanvas.height = rect.height;
+      }
+      const w = volCanvas.width, h = volCanvas.height;
+      volCtx.clearRect(0, 0, w, h);
+
+      // 背景グリッドとラベル (-60dB から 0dB のスケール)
+      volCtx.strokeStyle = 'rgba(161, 161, 170, 0.3)';
+      volCtx.lineWidth = 1;
+      volCtx.beginPath();
+      volCtx.moveTo(0, h / 2); volCtx.lineTo(w, h / 2);
+      volCtx.moveTo(0, h); volCtx.lineTo(w, h);
+      volCtx.stroke();
+
+      volCtx.fillStyle = '#a1a1aa';
+      volCtx.font = '10px Roboto';
+      volCtx.textAlign = 'right';
+      volCtx.fillText('MAX', w - 5, 12);
+      volCtx.fillText('-30dB', w - 5, h / 2 - 2);
+
+      // グラフの描画領域定義
+      volCtx.beginPath();
+      const startX = Math.max(0, ((volHistory[0].time - (currentTime - 3000)) / 3000) * w);
+      volCtx.moveTo(startX, h); // 左下の起点
+
+      for (let i = 0; i < volHistory.length; i++) {
+        const pt = volHistory[i];
+        // 時間軸（X座標）：3秒前(0) 〜 現在(w)
+        const x = Math.max(0, ((pt.time - (currentTime - 3000)) / 3000) * w);
+        // 音量軸（Y座標）：-60dB(h) 〜 0dB(0)
+        const y = h - ((pt.db - (-60)) / 60) * h;
+        volCtx.lineTo(x, y);
+      }
+
+      const lastX = ((volHistory[volHistory.length - 1].time - (currentTime - 3000)) / 3000) * w;
+      volCtx.lineTo(lastX, h); // 右下へ
+      volCtx.lineTo(startX, h); // 始点へ戻る
+
+      // グラデーションの作成（上部が赤、中間が黄〜オレンジ、下部が緑）
+      const gradient = volCtx.createLinearGradient(0, h, 0, 0);
+      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.1)');
+      gradient.addColorStop(0.5, 'rgba(234, 179, 8, 0.4)');
+      gradient.addColorStop(0.8, 'rgba(249, 115, 22, 0.6)');
+      gradient.addColorStop(1, 'rgba(239, 68, 68, 0.8)');
+
+      volCtx.fillStyle = gradient;
+      volCtx.fill();
+
+      // グラフの境界線（上部のライン）
+      volCtx.beginPath();
+      for (let i = 0; i < volHistory.length; i++) {
+        const pt = volHistory[i];
+        const x = ((pt.time - (currentTime - 3000)) / 3000) * w;
+        const y = h - ((pt.db - (-60)) / 60) * h;
+        if (i === 0) volCtx.moveTo(x, y);
+        else volCtx.lineTo(x, y);
+      }
+      volCtx.strokeStyle = '#f97316'; // orange-500
+      volCtx.lineWidth = 2;
+      volCtx.lineJoin = 'round';
+      volCtx.stroke();
+    }
+
+    // 🌟コーチングAIロジック
+    function updateDiagnosis(vol, volPer, cents, over, toneOk) {
+      let isVolOk = volPer >= 35, isPitchHigh = cents > 5, isPitchLow = cents < -5, isOverOk = over >= 40;
+
+      let title = "診断中...", action = "そのまま吹き続けてください";
+      
+      if (!isVolOk) { 
+        title = isPitchLow ? "息の圧力（スピード）不足" : "アンブシュアの締めすぎ"; 
+        action = "お腹からしっかり支えを作り、まっすぐ速い息を入れましょう。息の量が足りないと管体が十分に共鳴しません。"; 
+      }
+      else if (isPitchHigh) { 
+        title = isOverOk ? "オーバーブロー / 噛みすぎ" : "喉の閉塞 / 響きの潰れ"; 
+        action = "ピッチが上ずっています。アンブシュアの力を少し抜き、口の中（口腔）を『オ』の形に広げて豊かな響きを作りましょう。"; 
+      }
+      else if (isPitchLow) { 
+        title = "息の支えの緩み / 焦点のぼやけ"; 
+        action = "息の量は足りていますが、スピードが落ちてピッチが下がっています。アパチュアを少し引き締め、息の焦点を一点に集めてください。"; 
+      }
+      else { 
+        if (!isOverOk) {
+            title = "響き不足（平坦な音色）";
+            action = "音程は正確ですが、倍音が不足しています。息を管の奥深くまで吹き込み、楽器全体を鳴らす意識を持ちましょう。";
+        } else if (!toneOk) {
+            title = "音が鋭すぎる（ノイズ過多）";
+            action = "高音域（3kHz以上）の雑音成分が強く、耳障りな音色になっています。リードの噛みすぎを防ぎ、息を柔らかく入れましょう。";
+        } else {
+            title = "👑 理想的なサックス・トーン！"; 
+            action = "完璧です！ピッチが正確で、不要な高次ノイズが抑えられた、深みのある豊かな音色が出ています！"; 
+        }
+      }
+
+      document.getElementById('diag-title').textContent = title;
+      document.getElementById('diag-action').textContent = action;
+    }
+
+    /* ==========================================
+       5. VexFlowによる楽譜レンダリングと小節線管理
+       ========================================== */
+    // 画像から読み取った楽譜の完全再現データ (Eb管記譜 -> 実音)
+    // 休符を挟まないスラー（4拍 -> 4拍）と、小節線を定義
+    const chromaticSequence = [
+      { name: "Bb3", freq: 234.14, written: "G4",  vexKey: "g/4", acc: null, duration: 4, type: "note" },
+      { type: "barline" },
+      { name: "A3",  freq: 221.00, written: "F#4", vexKey: "f/4", acc: "#",  duration: 4, type: "note" },
+      { type: "doublebarline" },
+      { name: "Rest",freq: 0,      written: "休",   vexKey: "b/4", acc: null, duration: 2, type: "rest" },
+      { type: "doublebarline" },
+      
+      { name: "A3",  freq: 221.00, written: "F#4", vexKey: "f/4", acc: "#",  duration: 4, type: "note" },
+      { type: "barline" },
+      { name: "Ab3", freq: 208.57, written: "F4",  vexKey: "f/4", acc: "n",  duration: 4, type: "note" },
+      { type: "doublebarline" },
+      { name: "Rest",freq: 0,      written: "休",   vexKey: "b/4", acc: null, duration: 2, type: "rest" },
+      { type: "doublebarline" },
+      
+      { name: "Ab3", freq: 208.57, written: "F4",  vexKey: "f/4", acc: "n",  duration: 4, type: "note" },
+      { type: "barline" },
+      { name: "G3",  freq: 196.88, written: "E4",  vexKey: "e/4", acc: null, duration: 4, type: "note" },
+      { type: "doublebarline" },
+      { name: "Rest",freq: 0,      written: "休",   vexKey: "b/4", acc: null, duration: 2, type: "rest" },
+      { type: "doublebarline" },
+      
+      { name: "G3",  freq: 196.88, written: "E4",  vexKey: "e/4", acc: null, duration: 4, type: "note" },
+      { type: "barline" },
+      { name: "Gb3", freq: 185.83, written: "Eb4", vexKey: "e/4", acc: "b",  duration: 4, type: "note" },
+      { type: "doublebarline" },
+      { name: "Rest",freq: 0,      written: "休",   vexKey: "b/4", acc: null, duration: 2, type: "rest" },
+      { type: "doublebarline" },
+      
+      { name: "Gb3", freq: 185.83, written: "Eb4", vexKey: "e/4", acc: "b",  duration: 4, type: "note" },
+      { type: "doublebarline" },
+      { name: "F3",  freq: 175.41, written: "D4",  vexKey: "d/4", acc: null, duration: 4, type: "note" },
+      { type: "doublebarline" }
+    ];
+
+    const scaleSequence = [
+      { name: "Bb3", freq: 234.14, written: "G4", vexKey: "g/4", duration: 0.5, type: "note" },
+      { name: "C4",  freq: 262.81, written: "A4", vexKey: "a/4", duration: 0.5, type: "note" },
+      { name: "D4",  freq: 294.99, written: "B4", vexKey: "b/4", duration: 0.5, type: "note" },
+      { name: "Eb4", freq: 312.53, written: "C5", vexKey: "c/5", duration: 0.5, type: "note" },
+      { name: "F4",  freq: 350.82, written: "D5", vexKey: "d/5", duration: 0.5, type: "note" },
+      { name: "G4",  freq: 393.75, written: "E5", vexKey: "e/5", duration: 0.5, type: "note" },
+      { name: "A4",  freq: 442.00, written: "F#5", vexKey: "f/5", duration: 0.5, type: "note" },
+      { name: "Bb4", freq: 468.28, written: "G5", vexKey: "g/5", duration: 0.5, type: "note" },
+      { type: "barline" },
+      { name: "C5",  freq: 525.63, written: "A5", vexKey: "a/5", duration: 0.5, type: "note" },
+      { name: "Bb4", freq: 468.28, written: "G5", vexKey: "g/5", duration: 0.5, type: "note" },
+      { name: "A4",  freq: 442.00, written: "F#5", vexKey: "f/5", duration: 0.5, type: "note" },
+      { name: "G4",  freq: 393.75, written: "E5", vexKey: "e/5", duration: 0.5, type: "note" },
+      { name: "F4",  freq: 350.82, written: "D5", vexKey: "d/5", duration: 0.5, type: "note" },
+      { name: "Eb4", freq: 312.53, written: "C5", vexKey: "c/5", duration: 0.5, type: "note" },
+      { name: "D4",  freq: 294.99, written: "B4", vexKey: "b/4", duration: 0.5, type: "note" },
+      { name: "C4",  freq: 262.81, written: "A4", vexKey: "a/4", duration: 0.5, type: "note" },
+      { type: "barline" },
+      { name: "Bb3", freq: 234.14, written: "G4", vexKey: "g/4", duration: 3.0, type: "note" },
+      { name: "Rest",freq: 0,      written: "休",  vexKey: "b/4", duration: 1.0, type: "rest" },
+      { type: "doublebarline" },
+      { name: "Bb3", freq: 234.14, written: "G4", vexKey: "g/4", duration: 0.5, type: "note" },
+      { name: "D4",  freq: 294.99, written: "B4", vexKey: "b/4", duration: 0.5, type: "note" },
+      { name: "F4",  freq: 350.82, written: "D5", vexKey: "d/5", duration: 0.5, type: "note" },
+      { name: "Bb4", freq: 468.28, written: "G5", vexKey: "g/5", duration: 0.5, type: "note" },
+      { name: "A4",  freq: 442.00, written: "F#5", vexKey: "f/5", duration: 0.5, type: "note" },
+      { name: "F4",  freq: 350.82, written: "D5", vexKey: "d/5", duration: 0.5, type: "note" },
+      { name: "Eb4", freq: 312.53, written: "C5", vexKey: "c/5", duration: 0.5, type: "note" },
+      { name: "C4",  freq: 262.81, written: "A4", vexKey: "a/4", duration: 0.5, type: "note" },
+      { type: "barline" },
+      { name: "Bb3", freq: 234.14, written: "G4", vexKey: "g/4", duration: 3.0, type: "note" },
+      { name: "Rest",freq: 0,      written: "休",  vexKey: "b/4", duration: 1.0, type: "rest" },
+      { type: "doublebarline" }
+    ];
+
+    // VexFlow 描画関数
+    function renderVexFlow(seq, containerId, scrollId, isScale = false) {
+      const container = document.getElementById(containerId);
+      const scrollCont = document.getElementById(scrollId);
+      container.innerHTML = '';
+      
+      // 🌟【修正】音符の数に応じて全体の幅（横スクロール量）を動的に計算し、間隔を適度に詰める
+      // スケール（8分音符主体）の場合は間隔を狭く(25px/音符)、半音階（全音符主体）は少し広く(50px/音符)
+      const width = Math.max(800, seq.length * (isScale ? 23 : 50) + 100); 
+      container.style.width = width + 'px';
+      scrollCont.style.width = width + 'px';
+      
+      const VF = Vex.Flow;
+      const renderer = new VF.Renderer(container, VF.Renderer.Backends.SVG);
+      renderer.resize(width, 160);
+      const context = renderer.getContext();
+      const stave = new VF.Stave(10, 20, width - 20);
+      stave.addClef("treble");
+      if (isScale) stave.addKeySignature("G");
+      stave.setContext(context).draw();
+
+      const tickables = [];
+      const renderNotes = []; // 小節線を除いた純粋な音符配列（スラーやビーム用）
+      
+      seq.forEach(item => {
+        if (item.type === 'barline') {
+          const bn = new VF.BarNote();
+          tickables.push(bn);
+          item.vexNote = bn; // 🌟【修正】小節線も座標取得用にオブジェクトを保存
+        } else if (item.type === 'doublebarline') {
+          const bn = new VF.BarNote(VF.BarlineType.DOUBLE);
+          tickables.push(bn);
+          item.vexNote = bn; // 🌟【修正】小節線も座標取得用にオブジェクトを保存
+        } else {
+          let durStr = "";
+          if (item.duration === 4) durStr = "w";
+          else if (item.duration === 3) durStr = "hd";
+          else if (item.duration === 2) durStr = "h";
+          else if (item.duration === 1) durStr = "q";
+          else if (item.duration === 0.5) durStr = "8";
+          
+          if (item.type === 'rest') durStr += "r";
+
+          // 🌟【修正】align_center: false を追加し、全音符や全休符が小節の中央に寄らず左に配置されるようにする
+          const note = new VF.StaveNote({ 
+            clef: "treble", 
+            keys: [item.vexKey], 
+            duration: durStr
+          });
+          if (item.duration === 3 && item.type === 'note') note.addModifier(new VF.Dot(), 0);
+          if (item.acc) note.addModifier(new VF.Accidental(item.acc), 0);
+          
+          tickables.push(note);
+          renderNotes.push(note);
+          item.vexNote = note; // 🌟【追加】座標取得用にオブジェクトを保存
+        }
+      });
+
+      const totalBeats = seq.reduce((sum, item) => sum + (item.duration || 0), 0);
+      const voice = new VF.Voice({ num_beats: totalBeats, beat_value: 4 });
+      voice.setStrict(false);
+      voice.addTickables(tickables);
+
+      let beams = [];
+      if (isScale) {
+         // 手動の複雑なループを削除し、VexFlow公式の自動連桁生成機能を適用
+         // 2拍（4分音符2つ分 ＝ 2/4）ごとに8分音符を自動でグループ化して線で繋ぎます
+         beams = VF.Beam.generateBeams(renderNotes, {
+            groups: [new VF.Fraction(2, 4)]
+         });
+      }
+
+      new VF.Formatter().joinVoices([voice]).format([voice], width - 60);
+      voice.draw(context, stave);
+      
+      if (beams.length > 0) {
+        beams.forEach(b => b.setContext(context).draw());
+      }
+
+      // 半音階の4拍+4拍スラー
+      if (!isScale) {
+        for (let i = 0; i < renderNotes.length; i++) {
+           if (i % 3 === 0 && i + 1 < renderNotes.length && renderNotes[i].getDuration() === "w" && renderNotes[i+1].getDuration() === "w") {
+              const tie = new VF.StaveTie({
+                first_note: renderNotes[i],
+                last_note: renderNotes[i+1],
+                first_indices: [0],
+                last_indices: [0]
+              });
+              tie.setContext(context).draw();
+           }
+        }
+      }
+
+      // 🌟【修正】VexFlowが計算した後の「音符・小節線すべて」のX座標を保存
+      seq.forEach(item => {
+        if (item.vexNote && typeof item.vexNote.getAbsoluteX === 'function') {
+           item.x = item.vexNote.getAbsoluteX();
+        }
+      });
+
+      // カラオケバーの正確なスタート・エンド位置をデータ属性に保存
+      container.dataset.startX = stave.getNoteStartX();
+      container.dataset.endX = stave.getNoteEndX();
+    }
+
+    // VexFlow 描画の初期化
+    setTimeout(() => {
+      renderVexFlow(chromaticSequence, 'chr-notes-container', 'chr-scroll-container', false);
+      renderVexFlow(scaleSequence, 'scl-notes-container', 'scl-scroll-container', true);
+    }, 500);
+
+    let seqTimeoutIds = [];
+    let isSequencing = false;
+
+    function playClick(isHigh = false) {
+      if(!audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.frequency.value = isHigh ? 880 : 440;
+      osc.type = "square";
+      gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+        function startPractice(seq, type) {
+      if (isSequencing) return;
+      if (!audioCtx) initAudioContext();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      
+      isSequencing = true;
+      noteRecordings = []; // 🌟追加: 今回の練習の記録をリセット
+      const prefix = type === 'chromatic' ? 'chr' : 'scl';
+      const btn = document.getElementById(`btn-start-${type}`);
+      const status = document.getElementById(`${prefix}-status`);
+      const targetDisp = document.getElementById(`${prefix}-target-display`);
+      const fbDisp = document.getElementById(`${prefix}-pitch-feedback`);
+      const karaokeBar = document.getElementById(`${prefix}-karaoke-bar`);
+      
+      btn.disabled = true;
+      btn.classList.replace('bg-orange-600', 'bg-zinc-300');
+      
+      const bpm = parseInt(document.getElementById(`${prefix}-bpm`).value) || (type === 'chromatic' ? 72 : 96);
+      const beatDurationMs = (60 / bpm) * 1000;
+      const totalBeats = seq.reduce((sum, item) => sum + (item.duration || 0), 0);
+      
+      status.textContent = "COUNT IN";
+      status.className = "text-yellow-400";
+
+      // 🌟 メトロノームを曲の最後までスケジュールするロジック
+      const metronomeTicks = [];
+      // カウントイン4拍
+      for(let i = 0; i < 4; i++) metronomeTicks.push({ beat: i, isHigh: i === 0 });
+      
+      let currentSeqBeat = 0;
+      let beatsInCurrentMeasure = 0;
+      seq.forEach(item => {
+        if (item.type === 'barline' || item.type === 'doublebarline') {
+          beatsInCurrentMeasure = 0; // 小節線で拍をリセット
+        } else {
+          // 音符の長さの中で、整数の拍が来るたびにメトロノームを鳴らす
+          for (let b = 0; b < item.duration; b += 0.5) {
+             if ((currentSeqBeat + b) % 1 === 0) {
+                 metronomeTicks.push({
+                     beat: 4 + currentSeqBeat + b,
+                     isHigh: beatsInCurrentMeasure === 0 // 小節の頭は高音
+                 });
+             }
+             if ((currentSeqBeat + b) % 1 === 0) {
+                 beatsInCurrentMeasure += 1;
+             }
+          }
+          currentSeqBeat += item.duration;
+        }
+      });
+      // メトロノームの実行
+      metronomeTicks.forEach(tick => {
+        const id = setTimeout(() => {
+          if (!isSequencing) return;
+          playClick(tick.isHigh);
+        }, tick.beat * beatDurationMs);
+        seqTimeoutIds.push(id);
+      });
+
+      // 🌟 カラオケバーの進行アニメーション
+      const notesContainer = document.getElementById(`${prefix}-notes-container`);
+      const startX = parseFloat(notesContainer.dataset.startX) || 80;
+      const endX = parseFloat(notesContainer.dataset.endX) || startX + 500;
+      
+      karaokeBar.style.left = startX + 'px';
+      karaokeBar.style.width = "0px";
+
+      let currentDelay = 4 * beatDurationMs; // カウントイン終了後の時間
+      
+      // タイムラインの構築（時間と座標のペア）
+      const timeline = [];
+      let accumulatedTime = 0;
+      seq.forEach(item => {
+          if (typeof item.x !== 'undefined') {
+              if (item.type === 'note' || item.type === 'rest') {
+                  timeline.push({ time: accumulatedTime, x: item.x });
+                  accumulatedTime += item.duration * beatDurationMs;
+              } else if (item.type === 'barline' || item.type === 'doublebarline') {
+                  timeline.push({ time: accumulatedTime, x: item.x });
+              }
+          }
+      });
+      timeline.push({ time: accumulatedTime, x: endX }); // 最後の終着点
+
+      const startTime = performance.now() + currentDelay;
+
+      function animateKaraokeBar() {
+          if (!isSequencing) return;
+          const now = performance.now();
+          const elapsed = now - startTime;
+
+          if (elapsed < 0) { // カウントイン中
+              karaokeBar.style.width = '0px';
+              requestAnimationFrame(animateKaraokeBar);
+              return;
+          }
+
+          let i = 0;
+          while (i < timeline.length - 1 && timeline[i+1].time <= elapsed) {
+              i++;
+          }
+
+          if (i >= timeline.length - 1) { // 練習完了時
+              karaokeBar.style.width = Math.max(0, endX - startX) + 'px';
+              return;
+          }
+
+          const current = timeline[i];
+          const next = timeline[i+1];
+          const progress = (elapsed - current.time) / (next.time - current.time);
+          const currentX = current.x + (next.x - current.x) * progress;
+
+          karaokeBar.style.width = Math.max(0, currentX - startX) + 'px';
+          requestAnimationFrame(animateKaraokeBar);
+      }
+      
+      requestAnimationFrame(animateKaraokeBar);
+
+      // 音符ごとのターゲット周波数切り替え ＆ 🌟ADSRデータ収集トリガー
+      seq.forEach((item) => {
+        if (item.type === 'barline' || item.type === 'doublebarline') return;
+
+        if (item.type === 'note') {
+           // 🌟音符の開始タイミングで記録をスタート
+           const startId = setTimeout(() => {
+               currentNoteData = [];
+               isRecordingNote = true;
+           }, currentDelay);
+           seqTimeoutIds.push(startId);
+           
+           // 🌟音符の終了タイミングで記録を終了し解析する
+           const endId = setTimeout(() => {
+               isRecordingNote = false;
+               if (currentNoteData.length > 0) {
+                   const adsr = analyzeADSR(currentNoteData);
+                   noteRecordings.push({
+                       written: item.written,
+                       name: item.name,
+                       adsr: adsr
+                   });
+               }
+           }, currentDelay + item.duration * beatDurationMs - 10);
+           seqTimeoutIds.push(endId);
+        }
+
+        const id = setTimeout(() => {
+          status.textContent = "PLAYING";
+          status.className = "text-orange-400 animate-pulse";
+          
+          if (item.type === 'note') {
+            targetDisp.textContent = item.name;
+            targetFreq = item.freq; 
+            
+            const fbInterval = setInterval(() => {
+              if(!isSequencing) { clearInterval(fbInterval); return; }
+              const dev = smoothedCents;
+              if (Math.abs(dev) < 10) { fbDisp.textContent = "GOOD!"; fbDisp.className = "text-orange-400 font-bold"; }
+              else if (dev > 0) { fbDisp.textContent = "高い (High)"; fbDisp.className = "text-yellow-400"; }
+              else { fbDisp.textContent = "低い (Low)"; fbDisp.className = "text-blue-400"; }
+            }, 200);
+            
+            setTimeout(() => clearInterval(fbInterval), item.duration * beatDurationMs - 50);
+
+          } else {
+            targetDisp.textContent = "休符";
+            fbDisp.textContent = "...";
+            fbDisp.className = "text-zinc-500";
+          }
+        }, currentDelay);
+        seqTimeoutIds.push(id);
+        
+        currentDelay += item.duration * beatDurationMs;
+      });
+
+      // 終了処理
+      const endId = setTimeout(() => {
+        isSequencing = false;
+        btn.disabled = false;
+        btn.classList.replace('bg-zinc-300', 'bg-orange-600');
+        status.textContent = "FINISH";
+        status.className = "text-zinc-400";
+        karaokeBar.style.width = "0px";
+        targetDisp.textContent = "--";
+        fbDisp.textContent = "...";
+        
+        // 🌟結果の表示処理呼び出し
+        populateResultModal(noteRecordings);
+        document.getElementById('result-modal').classList.remove('hidden');
+      }, currentDelay);
+      seqTimeoutIds.push(endId);
+    }
+
+    // 🌟ADSR波形解析関数
+    function analyzeADSR(data) {
+        if (data.length < 5) return { a: 0, d: 0, s: 0, r: 0, pitch: 0, a_ok: false, tone_ok: false, missed: true };
+        
+        let maxDb = -Infinity;
+        data.forEach(d => { if(d.db > maxDb) maxDb = d.db; });
+        
+        // マイク入力が小さすぎた場合は未検出
+        if (maxDb < -35) return { a: 0, d: 0, s: 0, r: 0, pitch: 0, a_ok: false, tone_ok: false, missed: true };
+
+        // 平均ピッチ・音色計算 (音量がピークに近い部分のみを抽出)
+        let pitchSum = 0, pitchCount = 0;
+        let toneOkCount = 0;
+        data.forEach(d => {
+            if (d.db > maxDb - 10) {
+                pitchSum += d.cents;
+                if (d.toneOk) toneOkCount++;
+                pitchCount++;
+            }
+        });
+        let avgPitch = pitchCount > 0 ? (pitchSum / pitchCount) : 0;
+        // 音が鳴っている期間の70%以上で高域減衰の条件を満たしていれば「音色OK」とする
+        let isToneGood = pitchCount > 0 ? ((toneOkCount / pitchCount) >= 0.7) : false;
+
+        let thresholdDb = Math.max(-45, maxDb - 20); // その音におけるノイズフロア
+        
+        // Attack: 無音からピークの3dB下までに達する時間
+        let startIdx = 0;
+        while(startIdx < data.length && data[startIdx].db < thresholdDb) startIdx++;
+        if (startIdx >= data.length) startIdx = 0;
+        
+        let aEndIdx = startIdx;
+        while(aEndIdx < data.length && data[aEndIdx].db < maxDb - 3) aEndIdx++;
+        if (aEndIdx >= data.length) aEndIdx = data.length - 1;
+        let aTime = data[aEndIdx].time - data[startIdx].time;
+
+        // Sustain: アタック終了後〜終盤までの平均音量をサステインレベルとする
+        let susSum = 0, susCount = 0;
+        let midStart = aEndIdx + Math.floor((data.length - aEndIdx) * 0.25);
+        let midEnd = aEndIdx + Math.floor((data.length - aEndIdx) * 0.75);
+        for(let i = midStart; i < midEnd; i++) {
+            susSum += data[i].db;
+            susCount++;
+        }
+        let susDb = susCount > 0 ? (susSum / susCount) : (maxDb - 5);
+
+        // Decay: アタック終了後からサステインレベルに落ち着くまでの時間
+        let dEndIdx = aEndIdx;
+        while(dEndIdx < data.length && data[dEndIdx].db > susDb + 2) dEndIdx++;
+        if (dEndIdx >= data.length) dEndIdx = Math.floor((aEndIdx + data.length) / 2); // 減衰しきらなかった場合
+        let dTime = data[dEndIdx].time - data[aEndIdx].time;
+
+        // Release: 終わりから遡って、サステインレベルから離れた瞬間を探す
+        let rStartIdx = data.length - 1;
+        while(rStartIdx > dEndIdx && data[rStartIdx].db < susDb - 3) rStartIdx--;
+        let rEndIdx = rStartIdx;
+        while(rEndIdx < data.length - 1 && data[rEndIdx].db > thresholdDb) rEndIdx++;
+        let rTime = data[rEndIdx].time - data[rStartIdx].time;
+
+        // Sustain: ディケイ終了後からリリース開始までの時間
+        let sTime = data[rStartIdx].time - data[dEndIdx].time;
+        if (sTime < 0) sTime = 0;
+
+        return {
+            a: Math.round(aTime),
+            d: Math.round(dTime),
+            s: Math.round(sTime),
+            r: Math.round(rTime),
+            pitch: Math.round(avgPitch),
+            a_ok: aTime <= 200, // アタックが0.2秒以内か
+            tone_ok: isToneGood, // 🌟追加: 音色が良かったか
+            missed: false
+        };
+    }
+
+    // 🌟結果モーダル生成とコーチング文生成
+    function populateResultModal(recordings) {
+        const tbody = document.getElementById('result-table-body');
+        tbody.innerHTML = '';
+        
+        let validNotes = recordings.filter(r => !r.adsr.missed);
+        if (validNotes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-4 text-center text-zinc-500">音が検出されませんでした</td></tr>';
+            document.getElementById('result-feedback').innerHTML = "マイクからの入力が弱すぎたか、音が検出されませんでした。マイクの接続や距離を確認してください。";
+            return;
+        }
+
+        recordings.forEach(rec => {
+            if (rec.adsr.missed) return;
+            const tr = document.createElement('tr');
+            const aColor = rec.adsr.a_ok ? "text-emerald-600" : "text-red-500 font-bold";
+            const pColor = Math.abs(rec.adsr.pitch) <= 10 ? "text-emerald-600 font-bold" : "text-orange-500";
+            const tColor = rec.adsr.tone_ok ? "text-emerald-600 font-bold" : "text-red-500 font-bold";
+            const tIcon = rec.adsr.tone_ok ? "○" : "×";
+            
+            tr.innerHTML = `
+                <td class="px-2 py-2 font-medium">${rec.written}<br><span class="text-[10px] text-zinc-400">(${rec.name})</span></td>
+                <td class="px-2 py-2 ${pColor}">${rec.adsr.pitch > 0 ? '+'+rec.adsr.pitch : rec.adsr.pitch}</td>
+                <td class="px-2 py-2 ${aColor}">${rec.adsr.a}</td>
+                <td class="px-2 py-2">${rec.adsr.d}</td>
+                <td class="px-2 py-2">${rec.adsr.s}</td>
+                <td class="px-2 py-2">${rec.adsr.r}</td>
+                <td class="px-2 py-2 ${tColor}">${tIcon}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // AIコーチング文の生成
+        let slowAttacks = validNotes.filter(r => !r.adsr.a_ok).length;
+        let attackRatio = slowAttacks / validNotes.length;
+        
+        let hardTones = validNotes.filter(r => !r.adsr.tone_ok).length;
+        let hardToneRatio = hardTones / validNotes.length;
+
+        let avgPitch = validNotes.reduce((sum, r) => sum + r.adsr.pitch, 0) / validNotes.length;
+        let pitchVariance = validNotes.reduce((sum, r) => sum + Math.abs(r.adsr.pitch), 0) / validNotes.length;
+        let avgR = validNotes.reduce((sum, r) => sum + r.adsr.r, 0) / validNotes.length;
+
+        let feedback = "";
+        
+        if (attackRatio > 0.3) {
+            feedback += "⚠️ <strong class='text-red-500'>アタック（A）が遅れ気味です。</strong> 立ち上がりに0.2秒以上かかっている音符が多くあります。タンギングの瞬間に息のスピードを最大にし、クリアな発音を意識してください。<br><br>";
+        } else {
+            feedback += "✨ <strong class='text-emerald-600'>アタック（A）が非常に優秀です！</strong> 無音から最大音量への立ち上がりが0.2秒以内で、スパッと明瞭に発音できています。<br><br>";
+        }
+
+        if (hardToneRatio > 0.3) {
+            feedback += "🎷 <strong class='text-orange-600'>音色（Tone）が鋭くなりがちです。</strong> 3kHz以上の高次倍音が強く出すぎており、音が薄く耳障りに聞こえやすい状態です。アンブシュアの噛みすぎに注意し、口腔内を広く保ちましょう。<br><br>";
+        } else {
+            feedback += "🎷 <strong class='text-emerald-600'>音色（Tone）に深みがあります！</strong> 高音域のノイズ成分が綺麗に減衰しており、サックス特有のまろやかで豊かな響きが維持されています。<br><br>";
+        }
+
+        if (pitchVariance < 10) {
+            feedback += "🎯 <strong>ピッチが非常に安定しています。</strong> 素晴らしいアンブシュアのコントロールです。<br>";
+        } else if (avgPitch > 10) {
+            feedback += "🔺 <strong>全体的にピッチが上ずり気味です。</strong> アパチュアが締まりすぎていないか、息の圧力が高すぎないか確認しましょう。<br>";
+        } else if (avgPitch < -10) {
+            feedback += "🔻 <strong>全体的にピッチが下がり気味です。</strong> 息の支えをしっかり保ち、口角を少し寄せる意識を持ちましょう。<br>";
+        } else {
+            feedback += "👍 <strong>ピッチは概ね基準内に収まっています。</strong> さらに全音符で±5セント以内を目指して響きを磨きましょう。<br>";
+        }
+
+        if (avgR > 200) {
+            feedback += "<br>📝 <strong>音の処理（リリース/R）が長引いています。</strong> フレーズの終わりは息の支えを残したままスッと抜くように意識すると、より洗練された演奏になります。";
+        } else {
+            feedback += "<br>📝 音の処理（リリース/R）もスッキリとまとまっています。";
+        }
+
+        document.getElementById('result-feedback').innerHTML = feedback;
+    }
+
+    document.getElementById('btn-start-chromatic').addEventListener('click', () => startPractice(chromaticSequence, 'chromatic'));
+    document.getElementById('btn-start-scale').addEventListener('click', () => startPractice(scaleSequence, 'scale'));
+    document.getElementById('btn-close-modal').addEventListener('click', () => { document.getElementById('result-modal').classList.add('hidden'); });
+
+    /* ==========================================
+       6. デバイス / ファイル コントロール
+       ========================================== */
+    const btnStart = document.getElementById('btn-start');
+    const btnFile = document.getElementById('btn-file');
+    const fileInput = document.getElementById('file-input');
+
+    btnStart.addEventListener('click', async () => {
+      if (isRunning && !isFileMode) return;
+      try {
+        if (audioSource) { audioSource.disconnect(); }
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+        initAudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        microphone = audioCtx.createMediaStreamSource(stream);
+        microphone.connect(analyser);
+        analyser.disconnect();
+        
+        isRunning = true;
+        document.getElementById('mic_status').textContent = "mic";
+        btnStart.classList.add("bg-orange-500");
+        isFileMode = false;
+        requestAnimationFrame(processAudio);
+      } catch (err) {
+        btnStart.classList.replace("fill-orange-500", "fill-red-500");
+        btnStart.classList.add("bg-red-500");
+        document.getElementById('mic_status').textContent = "mic_alert";
+      }
+    });
+
+    btnFile.addEventListener('click', () => fileInput.click());
+    
+    fileInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        initAudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        audioCtx.decodeAudioData(e.target.result, function(buffer) {
+          if (audioSource) { audioSource.disconnect(); }
+          audioSource = audioCtx.createBufferSource();
+          audioSource.buffer = buffer;
+          audioSource.connect(analyser);
+          analyser.connect(audioCtx.destination); 
+          audioSource.start(0);
+          
+          isRunning = true;
+          isFileMode = true;
+          btnStart.classList.replace('bg-red-500', 'bg-orange-500');
+          btnStart.innerHTML = 'MIC START';
+          requestAnimationFrame(processAudio);
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+  </script>
+</body>
+</html>
